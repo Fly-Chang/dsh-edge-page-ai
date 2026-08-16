@@ -81,51 +81,70 @@ function buildUi(gateway, state) {
   const root = document.createElement('div');
   root.id = 'dsh-page-ai-panel';
   root.setAttribute('data-dsh-ui', '1');
-  root.innerHTML = `
-  <style>
-    #dsh-page-ai-panel{all:initial;position:fixed;right:16px;bottom:16px;z-index:2147483647;
-      width:300px;font:13px/1.5 system-ui,"Segoe UI",sans-serif;color:#1b1f24;
-      background:#ffffff;border:1px solid #d0d7de;border-radius:10px;
-      box-shadow:0 8px 30px rgba(0,0,0,.18)}
-    #dsh-page-ai-panel .dsh-head{display:flex;align-items:center;gap:8px;
-      padding:8px 10px;cursor:move;user-select:none;border-bottom:1px solid #eaeef2;
-      font-weight:600}
-    #dsh-page-ai-panel .dsh-head button{margin-left:auto;border:0;background:transparent;
-      font-size:15px;cursor:pointer;color:#667085}
-    #dsh-page-ai-panel .dsh-body{padding:10px;display:flex;flex-direction:column;gap:8px}
-    #dsh-page-ai-panel .dsh-row{display:flex;gap:8px}
-    #dsh-page-ai-panel button.dsh-btn{flex:1;border:1px solid #d0d7de;border-radius:6px;
-      background:#f6f8fa;padding:7px 8px;cursor:pointer;font:inherit}
-    #dsh-page-ai-panel button.dsh-btn:hover{background:#eef1f4}
-    #dsh-page-ai-panel button.dsh-btn:disabled{opacity:.5;cursor:default}
-    #dsh-page-ai-panel .dsh-status{color:#667085;min-height:18px;word-break:break-all}
-    #dsh-page-ai-panel .dsh-status.dsh-err{color:#b42318}
-    #dsh-page-ai-panel textarea{box-sizing:border-box;width:100%;height:72px;resize:vertical;
-      border:1px solid #d0d7de;border-radius:6px;padding:6px;font:inherit}
-    #dsh-page-ai-panel .dsh-chat{border-top:1px dashed #eaeef2;padding-top:8px;
-      max-height:160px;overflow:auto;white-space:pre-wrap;word-break:break-word}
-  </style>
-  <div class="dsh-head" data-dsh-drag-handle="1"><span>DSH 页面助手</span><button type="button" data-dsh-close="1" title="关闭">×</button></div>
-  <div class="dsh-body">
-    <div class="dsh-row">
-      <button type="button" class="dsh-btn" data-dsh-action="translate">整页翻译</button>
-      <button type="button" class="dsh-btn" data-dsh-action="restore">还原原文</button>
-        <button type="button" class="dsh-btn" data-dsh-action="stop" disabled>停止</button>
-    </div>
-    <div class="dsh-status">正在检查本地网关…</div>
-    <details>
-      <summary style="cursor:pointer">随呼对话</summary>
-      <div style="display:flex;flex-direction:column;gap:8px;padding-top:8px">
-        <textarea data-dsh-chat-input placeholder="向 DSH/模型提问，默认带上当前页面信息"></textarea>
-        <button type="button" class="dsh-btn" data-dsh-action="chat">发送</button>
-        <div class="dsh-chat" data-dsh-chat-log></div>
+  root.innerHTML = `    <style>
+      #dsh-page-ai-panel{all:initial;position:fixed;right:18px;bottom:18px;z-index:2147483647;width:324px;font:13px/1.5 system-ui,"Segoe UI",sans-serif;color:#1f2430;background:rgba(255,255,255,.97);border:1px solid rgba(15,23,42,.12);border-radius:16px;box-shadow:0 18px 50px rgba(15,23,42,.22);overflow:hidden}
+      #dsh-page-ai-panel .dsh-head{display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:move;user-select:none;background:linear-gradient(135deg,#4f6ef7,#7c5cf0);color:#fff;font-weight:600}
+      #dsh-page-ai-panel .dsh-dot{width:8px;height:8px;border-radius:50%;background:#5eead4;box-shadow:0 0 0 3px rgba(94,234,212,.25)}
+      #dsh-page-ai-panel .dsh-head button{margin-left:auto;border:0;background:rgba(255,255,255,.16);color:#fff;width:24px;height:24px;border-radius:8px;font-size:14px;line-height:1;cursor:pointer}
+      #dsh-page-ai-panel .dsh-head button:hover{background:rgba(255,255,255,.28)}
+      #dsh-page-ai-panel .dsh-body{padding:14px;display:flex;flex-direction:column;gap:10px}
+      #dsh-page-ai-panel .dsh-row{display:flex;gap:8px}
+      #dsh-page-ai-panel button.dsh-btn{flex:1;border:1px solid #dfe3ea;border-radius:10px;background:#f7f8fb;padding:8px 6px;cursor:pointer;font:inherit;font-weight:500;color:#384152;transition:transform .05s ease,box-shadow .15s ease,background .15s ease}
+      #dsh-page-ai-panel button.dsh-btn:hover{background:#eef1f7}
+      #dsh-page-ai-panel button.dsh-btn:active{transform:translateY(1px)}
+      #dsh-page-ai-panel button.dsh-btn:disabled{opacity:.45;cursor:default;transform:none}
+      #dsh-page-ai-panel button.dsh-primary{background:linear-gradient(135deg,#4f6ef7,#7c5cf0);border:none;color:#fff}
+      #dsh-page-ai-panel button.dsh-primary:hover{background:linear-gradient(135deg,#5b7bf8,#8b6cf7)}
+      #dsh-page-ai-panel button.dsh-stop{border-color:#f3c6c6;background:#fff5f5;color:#b42318}
+      #dsh-page-ai-panel button.dsh-stop:hover{background:#ffecec}
+      #dsh-page-ai-panel .dsh-progress{height:4px;background:#eef1f6;border-radius:999px;overflow:hidden;display:none}
+      #dsh-page-ai-panel .dsh-progress.dsh-on{display:block}
+      #dsh-page-ai-panel .dsh-progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#4f6ef7,#8b6cf7);transition:width .2s ease}
+      #dsh-page-ai-panel .dsh-status{color:#667085;min-height:20px;word-break:break-all;background:#f6f8fb;border-radius:8px;padding:6px 8px}
+      #dsh-page-ai-panel .dsh-status.dsh-err{background:#fff5f5;color:#b42318}
+      #dsh-page-ai-panel details{border-top:1px dashed #e6eaf1;padding-top:8px}
+      #dsh-page-ai-panel summary{cursor:pointer;font-weight:600;color:#384152}
+      #dsh-page-ai-panel textarea{box-sizing:border-box;width:100%;height:72px;resize:vertical;border:1px solid #dfe3ea;border-radius:10px;padding:8px;font:inherit;background:#fbfcfe}
+      #dsh-page-ai-panel .dsh-chat{border-top:1px dashed #e6eaf1;padding-top:8px;max-height:170px;overflow:auto;display:flex;flex-direction:column;gap:6px;white-space:pre-wrap;word-break:break-word}
+      #dsh-page-ai-panel .dsh-msg{max-width:88%;border-radius:10px;padding:6px 9px;line-height:1.45}
+      #dsh-page-ai-panel .dsh-user{align-self:flex-end;background:#eef2ff;color:#384152}
+      #dsh-page-ai-panel .dsh-bot{align-self:flex-start;background:#f6f8fb;color:#1f2430}
+    </style>
+    <div class="dsh-head" data-dsh-drag-handle="1"><span class="dsh-dot"></span><span>DSH 页面助手</span><button type="button" data-dsh-close="1" title="关闭">×</button></div>
+    <div class="dsh-body">
+      <div class="dsh-row">
+        <button type="button" class="dsh-btn dsh-primary" data-dsh-action="translate">整页翻译</button>
+        <button type="button" class="dsh-btn" data-dsh-action="restore">还原原文</button>
+        <button type="button" class="dsh-btn dsh-stop" data-dsh-action="stop" disabled>停止</button>
       </div>
-    </details>
-  </div>`;
+      <div class="dsh-progress"><span></span></div>
+      <div class="dsh-status">正在检查本地网关…</div>
+      <details>
+        <summary>随呼对话</summary>
+        <div style="display:flex;flex-direction:column;gap:8px;padding-top:8px">
+          <textarea data-dsh-chat-input placeholder="向 DSH/模型提问，默认带上当前页面信息"></textarea>
+          <button type="button" class="dsh-btn dsh-primary" data-dsh-action="chat">发送</button>
+          <div class="dsh-chat" data-dsh-chat-log></div>
+        </div>
+      </details>
+    </div>`;
 
   const statusEl = root.querySelector('.dsh-status');
   const chatInput = root.querySelector('[data-dsh-chat-input]');
   const chatLog = root.querySelector('[data-dsh-chat-log]');
+  const progressEl = root.querySelector('.dsh-progress');
+  const progressBar = root.querySelector('.dsh-progress span');
+
+  const setProgress = (done, total) => {
+    if (!progressEl || !progressBar) return;
+    if (!total || done >= total) {
+      progressEl.classList.remove('dsh-on');
+      progressBar.style.width = '0%';
+      return;
+    }
+    progressEl.classList.add('dsh-on');
+    progressBar.style.width = `${Math.min(100, Math.round((done / total) * 100))}%`;
+  };
 
   const setStatus = (message, isError = false) => {
     statusEl.textContent = message;
@@ -149,13 +168,17 @@ function buildUi(gateway, state) {
     state.abortController = controller;
     setBusy(true);
     setStatus('正在收集页面文本…');
+    setProgress(0, 1);
     try {
       const result = await translatePage({
         root: document.body,
         gateway,
         sourceLang: SOURCE_LANG,
         targetLang: TARGET_LANG,
-        onProgress: (_phase, done, total) => setStatus(`翻译中 ${done}/${total}`),
+        onProgress: (_phase, done, total) => {
+        setProgress(done, total);
+        setStatus(`翻译中 ${done}/${total}`);
+      },
           signal: controller.signal,
       });
       if (result.applied > 0) {
@@ -174,6 +197,7 @@ function buildUi(gateway, state) {
       if (state.abortController === controller) {
         state.abortController = null;
       }
+      setProgress(0, 0);
       setBusy(false);
     }
   }
@@ -221,6 +245,7 @@ function buildUi(gateway, state) {
 
   function appendChat(who, text) {
     const row = document.createElement('div');
+    row.className = who === '我' ? 'dsh-msg dsh-user' : 'dsh-msg dsh-bot';
     row.textContent = `${who}：${text}`;
     chatLog.appendChild(row);
     while (chatLog.children.length > MAX_CHAT_ROWS) {
