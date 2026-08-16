@@ -22,6 +22,7 @@
 - 双击启动方式：前台 `start-gateway.bat`、静默后台 `start-gateway-silent.vbs`、停止 `stop-gateway.bat`、打开书签页 `open-bookmarklet.bat`。
 - Edge 薄壳扩展隔离世界客户端：`bridge-client.bundle.mjs` + 本地打包器，不向页面注入 `<script>`，可绕开严格 CSP/本地网络访问限制（BUG-013）。
 - 翻译性能 A/B/C：逐批立即回填（渐进显示）、翻译请求关闭思考（对话保留低思考）、小批 30 条 + 3 路并发。
+- 薄壳扩展改为手动激活：页面加载不自动初始化/访问网关，仅工具栏图标或 `Alt+Shift+D` 触发。
 
 ### Fixed
 

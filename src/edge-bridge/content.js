@@ -70,5 +70,7 @@
     return false;
   });
 
-  void ensurePanel();
+  // Do NOT auto-initialize the panel or access the gateway on page load.
+  // The client loads only when the user clicks the toolbar icon or presses
+  // Alt+Shift+D (manual activation requested by the user).
 })();
