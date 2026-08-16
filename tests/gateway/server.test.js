@@ -43,7 +43,7 @@ test('网关 v1 核心端点（mock 模型）', async (t) => {
   });
   assert.equal(handshake.status, 200);
   const handshakeBody = await handshake.json();
-  assert.equal(handshakeBody.name, 'edge-page-ai');
+  assert.equal(handshakeBody.name, 'dsh-edge-page-ai');
   assert.equal(handshakeBody.capabilities.translate, true);
 
   // 翻译。
