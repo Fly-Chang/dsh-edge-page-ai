@@ -1,0 +1,15 @@
+{
+  "gateway": {
+    "host": "127.0.0.1",
+    "port": 8787,
+    "token": ""
+  },
+  "model": {
+    "provider": "mock",
+    "baseUrl": "https://api.openai.com/v1",
+    "apiKey": "",
+    "model": "gpt-4o-mini",
+    "timeoutMs": 30000,
+    "jsonMode": false
+  }
+}

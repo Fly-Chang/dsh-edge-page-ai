@@ -1,0 +1,25 @@
+{
+  "name": "edge-page-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Edge 页面 AI 翻译与随呼助手：DSH 插件主体 + 浏览器薄壳/书签入口",
+  "type": "module",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "start": "node src/gateway/server.js",
+    "dev": "node --watch src/gateway/server.js",
+    "test": "node --test \"tests/**/*.test.js\"",
+    "build:edge-bridge": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-edge-bridge.ps1"
+  },
+  "keywords": [
+    "edge",
+    "translation",
+    "dsh-plugin",
+    "bookmarklet",
+    "mv3"
+  ],
+  "license": "MIT",
+  "dependencies": {}
+}

@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "DSH Page AI Bridge",
+  "version": "0.1.0",
+  "description": "edge-page-ai 浏览器薄壳：把页面桥接到本机 DSH 网关，只负责注入与转发，不保存模型密钥。",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "DSH 页面助手"
+  },
+  "options_page": "options.html",
+  "commands": {
+    "toggle-dsh-panel": {
+      "suggested_key": {
+        "default": "Alt+Shift+D"
+      },
+      "description": "显示/隐藏 DSH 页面助手面板"
+    }
+  }
+}

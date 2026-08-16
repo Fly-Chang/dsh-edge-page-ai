@@ -1,0 +1,18 @@
+# Node
+node_modules/
+
+# 构建产物
+dist/*.zip
+dist/*.crx
+dist/*.pem
+
+# 本地配置与密钥
+*.local.json
+config.local.json
+.gateway-token
+
+# 日志与临时文件
+*.log
+tmp/
+.DS_Store
+Thumbs.db
