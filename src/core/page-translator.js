@@ -44,9 +44,10 @@ async function runPool(items, worker, concurrency) {
  * @param {string} [options.targetLang='zh-CN']
  * @param {string} [options.sourceLang='en']
  * @param {(phase: string, done: number, total: number) => void} [options.onProgress]
+ * @param {AbortSignal} [options.signal] 外部取消信号（停止翻译）
  * @param {number} [options.batchSize=TRANSLATE_BATCH_SIZE]
  * @param {number} [options.concurrency=TRANSLATE_CONCURRENCY]
- * @returns {Promise<{ units: object[], applied: number, failed: object[], batches: number }>}
+ * @returns {Promise<{ units: object[], applied: number, failed: object[], batches: number, aborted: boolean }>}
  */
 export async function translatePage(options) {
   const {
@@ -55,6 +56,7 @@ export async function translatePage(options) {
     targetLang = 'zh-CN',
     sourceLang = 'en',
     onProgress = () => {},
+    signal,
     batchSize = TRANSLATE_BATCH_SIZE,
     concurrency = TRANSLATE_CONCURRENCY,
   } = options;
@@ -100,6 +102,11 @@ export async function translatePage(options) {
   };
 
   await runPool(batches, async (batch) => {
+    // 已请求取消：跳过剩余批次，让已完成的回填保留，未开始的保留原文。
+    if (signal?.aborted) {
+      return;
+    }
+
     const batchUnits = batch.map((item) => byId.get(item.id)).filter(Boolean);
     const batchTranslations = {};
 
@@ -109,7 +116,7 @@ export async function translatePage(options) {
         sourceLang,
         targetLang,
         items: batch,
-      });
+      }, { signal });
 
       if (!Array.isArray(response?.items)) {
         throw new Error('gateway.translate returned an invalid response');
@@ -139,6 +146,9 @@ export async function translatePage(options) {
         recordFailure(failure.id, failure.reason);
       }
     } catch (error) {
+      if (signal?.aborted) {
+        return;
+      }
       // 单批失败不中断整页：记录失败，保留原文，继续其他批次。
       for (const unit of batchUnits) {
         recordFailure(unit.id, 'gateway-error', error?.message ?? String(error));
@@ -149,17 +159,20 @@ export async function translatePage(options) {
     }
   }, concurrency);
 
-  // 模型漏掉的单元保留原文。
-  for (const unit of units) {
-    if (!(unit.id in translationsById)) {
-      recordFailure(unit.id, 'missing-from-model-response');
+  // 模型漏掉的单元保留原文；用户主动取消时不把未处理单元计为失败。
+  const aborted = Boolean(signal?.aborted);
+  if (!aborted) {
+    for (const unit of units) {
+      if (!(unit.id in translationsById)) {
+        recordFailure(unit.id, 'missing-from-model-response');
+      }
     }
   }
 
-  // 全部完成后统一标记已翻译父元素，保证下次收集的幂等性。
+  // 全部完成后统一标记已翻译父元素，保证下次收集的幂等性（取消时同样生效）。
   markTranslatedParents(units, translationsById);
 
-  return { units, applied, failed, batches: batches.length };
+  return { units, applied, failed, batches: batches.length, aborted };
 }
 
 /**

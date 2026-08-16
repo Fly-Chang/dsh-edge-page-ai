@@ -192,7 +192,7 @@ export function createGatewayClient(options = {}) {
     throw new TypeError('createGatewayClient: fetch is not available');
   }
 
-  async function request(endpoint, { method = 'GET', body, auth = true } = {}) {
+  async function request(endpoint, { method = 'GET', body, auth = true, signal } = {}) {
     const headers = { Accept: 'application/json' };
     if (auth && token) {
       headers[TOKEN_HEADER] = token;
@@ -202,6 +202,14 @@ export function createGatewayClient(options = {}) {
     }
 
     const controller = new AbortController();
+    const onExternalAbort = () => controller.abort();
+    if (signal) {
+      if (signal.aborted) {
+        controller.abort();
+      } else {
+        signal.addEventListener('abort', onExternalAbort, { once: true });
+      }
+    }
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     let response;
     try {
@@ -215,6 +223,7 @@ export function createGatewayClient(options = {}) {
       throw new GatewayClientError('NETWORK_ERROR', error.message ?? 'network error');
     } finally {
       clearTimeout(timer);
+      signal?.removeEventListener('abort', onExternalAbort);
     }
 
     let payload = null;
@@ -239,7 +248,8 @@ export function createGatewayClient(options = {}) {
     baseUrl,
     health: () => request('/v1/health', { auth: false }),
     handshake: () => request('/v1/handshake'),
-    translate: (payload) => request('/v1/translate', { method: 'POST', body: payload }),
+    translate: (payload, options = {}) =>
+      request('/v1/translate', { method: 'POST', body: payload, signal: options.signal }),
     chat: (payload) => request('/v1/chat', { method: 'POST', body: payload }),
   };
 }
@@ -623,9 +633,10 @@ async function runPool(items, worker, concurrency) {
  * @param {string} [options.targetLang='zh-CN']
  * @param {string} [options.sourceLang='en']
  * @param {(phase: string, done: number, total: number) => void} [options.onProgress]
+ * @param {AbortSignal} [options.signal] 外部取消信号（停止翻译）
  * @param {number} [options.batchSize=TRANSLATE_BATCH_SIZE]
  * @param {number} [options.concurrency=TRANSLATE_CONCURRENCY]
- * @returns {Promise<{ units: object[], applied: number, failed: object[], batches: number }>}
+ * @returns {Promise<{ units: object[], applied: number, failed: object[], batches: number, aborted: boolean }>}
  */
 export async function translatePage(options) {
   const {
@@ -634,6 +645,7 @@ export async function translatePage(options) {
     targetLang = 'zh-CN',
     sourceLang = 'en',
     onProgress = () => {},
+    signal,
     batchSize = TRANSLATE_BATCH_SIZE,
     concurrency = TRANSLATE_CONCURRENCY,
   } = options;
@@ -679,6 +691,11 @@ export async function translatePage(options) {
   };
 
   await runPool(batches, async (batch) => {
+    // 已请求取消：跳过剩余批次，让已完成的回填保留，未开始的保留原文。
+    if (signal?.aborted) {
+      return;
+    }
+
     const batchUnits = batch.map((item) => byId.get(item.id)).filter(Boolean);
     const batchTranslations = {};
 
@@ -688,7 +705,7 @@ export async function translatePage(options) {
         sourceLang,
         targetLang,
         items: batch,
-      });
+      }, { signal });
 
       if (!Array.isArray(response?.items)) {
         throw new Error('gateway.translate returned an invalid response');
@@ -718,6 +735,9 @@ export async function translatePage(options) {
         recordFailure(failure.id, failure.reason);
       }
     } catch (error) {
+      if (signal?.aborted) {
+        return;
+      }
       // 单批失败不中断整页：记录失败，保留原文，继续其他批次。
       for (const unit of batchUnits) {
         recordFailure(unit.id, 'gateway-error', error?.message ?? String(error));
@@ -728,17 +748,20 @@ export async function translatePage(options) {
     }
   }, concurrency);
 
-  // 模型漏掉的单元保留原文。
-  for (const unit of units) {
-    if (!(unit.id in translationsById)) {
-      recordFailure(unit.id, 'missing-from-model-response');
+  // 模型漏掉的单元保留原文；用户主动取消时不把未处理单元计为失败。
+  const aborted = Boolean(signal?.aborted);
+  if (!aborted) {
+    for (const unit of units) {
+      if (!(unit.id in translationsById)) {
+        recordFailure(unit.id, 'missing-from-model-response');
+      }
     }
   }
 
-  // 全部完成后统一标记已翻译父元素，保证下次收集的幂等性。
+  // 全部完成后统一标记已翻译父元素，保证下次收集的幂等性（取消时同样生效）。
   markTranslatedParents(units, translationsById);
 
-  return { units, applied, failed, batches: batches.length };
+  return { units, applied, failed, batches: batches.length, aborted };
 }
 
 /**
@@ -842,6 +865,7 @@ function bootstrap() {
     originals: new Map(),
     busy: false,
     handshakeOk: false,
+    abortController: null,
   };
 
   const ui = buildUi(gateway, state);
@@ -889,6 +913,7 @@ function buildUi(gateway, state) {
     <div class="dsh-row">
       <button type="button" class="dsh-btn" data-dsh-action="translate">整页翻译</button>
       <button type="button" class="dsh-btn" data-dsh-action="restore">还原原文</button>
+        <button type="button" class="dsh-btn" data-dsh-action="stop" disabled>停止</button>
     </div>
     <div class="dsh-status">正在检查本地网关…</div>
     <details>
@@ -913,12 +938,18 @@ function buildUi(gateway, state) {
   const setBusy = (busy) => {
     state.busy = busy;
     for (const button of root.querySelectorAll('button.dsh-btn')) {
-      button.disabled = busy;
+      if (button.dataset.dshAction === 'stop') {
+        button.disabled = !busy;
+      } else {
+        button.disabled = busy;
+      }
     }
   };
 
   async function onTranslate() {
     if (state.busy) return;
+    const controller = new AbortController();
+    state.abortController = controller;
     setBusy(true);
     setStatus('正在收集页面文本…');
     try {
@@ -928,11 +959,14 @@ function buildUi(gateway, state) {
         sourceLang: SOURCE_LANG,
         targetLang: TARGET_LANG,
         onProgress: (_phase, done, total) => setStatus(`翻译中 ${done}/${total}`),
+          signal: controller.signal,
       });
       if (result.applied > 0) {
         state.originals = snapshotOriginals(result.units);
       }
-      if (result.failed.length > 0) {
+      if (result.aborted) {
+        setStatus(result.applied > 0 ? `已停止：${result.applied} 处已翻译，其余保留原文` : '已停止翻译');
+      } else if (result.failed.length > 0) {
         setStatus(`完成：${result.applied} 处已翻译，${result.failed.length} 处保留原文`, true);
       } else {
         setStatus(`完成：${result.applied} 处已翻译`);
@@ -940,8 +974,20 @@ function buildUi(gateway, state) {
     } catch (error) {
       setStatus(friendlyError(error), true);
     } finally {
+      if (state.abortController === controller) {
+        state.abortController = null;
+      }
       setBusy(false);
     }
+  }
+
+  function onStop() {
+    if (!state.busy || !state.abortController) {
+      setStatus('当前没有进行中的翻译');
+      return;
+    }
+    state.abortController.abort();
+    setStatus('正在停止翻译…');
   }
 
   function onRestore() {
@@ -1025,6 +1071,7 @@ function buildUi(gateway, state) {
     const action = event.target.closest('[data-dsh-action]')?.dataset?.dshAction;
     if (action === 'translate') await onTranslate();
     if (action === 'restore') onRestore();
+    if (action === 'stop') onStop();
     if (action === 'chat') await onChat();
     if (event.target.closest('[data-dsh-close]')) {
       // 关闭改为隐藏：同文档内模块 URL 相同，浏览器不会二次执行模块。

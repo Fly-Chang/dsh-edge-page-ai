@@ -62,6 +62,7 @@ function bootstrap() {
     originals: new Map(),
     busy: false,
     handshakeOk: false,
+    abortController: null,
   };
 
   const ui = buildUi(gateway, state);
@@ -109,6 +110,7 @@ function buildUi(gateway, state) {
     <div class="dsh-row">
       <button type="button" class="dsh-btn" data-dsh-action="translate">整页翻译</button>
       <button type="button" class="dsh-btn" data-dsh-action="restore">还原原文</button>
+        <button type="button" class="dsh-btn" data-dsh-action="stop" disabled>停止</button>
     </div>
     <div class="dsh-status">正在检查本地网关…</div>
     <details>
@@ -133,12 +135,18 @@ function buildUi(gateway, state) {
   const setBusy = (busy) => {
     state.busy = busy;
     for (const button of root.querySelectorAll('button.dsh-btn')) {
-      button.disabled = busy;
+      if (button.dataset.dshAction === 'stop') {
+        button.disabled = !busy;
+      } else {
+        button.disabled = busy;
+      }
     }
   };
 
   async function onTranslate() {
     if (state.busy) return;
+    const controller = new AbortController();
+    state.abortController = controller;
     setBusy(true);
     setStatus('正在收集页面文本…');
     try {
@@ -148,11 +156,14 @@ function buildUi(gateway, state) {
         sourceLang: SOURCE_LANG,
         targetLang: TARGET_LANG,
         onProgress: (_phase, done, total) => setStatus(`翻译中 ${done}/${total}`),
+          signal: controller.signal,
       });
       if (result.applied > 0) {
         state.originals = snapshotOriginals(result.units);
       }
-      if (result.failed.length > 0) {
+      if (result.aborted) {
+        setStatus(result.applied > 0 ? `已停止：${result.applied} 处已翻译，其余保留原文` : '已停止翻译');
+      } else if (result.failed.length > 0) {
         setStatus(`完成：${result.applied} 处已翻译，${result.failed.length} 处保留原文`, true);
       } else {
         setStatus(`完成：${result.applied} 处已翻译`);
@@ -160,8 +171,20 @@ function buildUi(gateway, state) {
     } catch (error) {
       setStatus(friendlyError(error), true);
     } finally {
+      if (state.abortController === controller) {
+        state.abortController = null;
+      }
       setBusy(false);
     }
+  }
+
+  function onStop() {
+    if (!state.busy || !state.abortController) {
+      setStatus('当前没有进行中的翻译');
+      return;
+    }
+    state.abortController.abort();
+    setStatus('正在停止翻译…');
   }
 
   function onRestore() {
@@ -245,6 +268,7 @@ function buildUi(gateway, state) {
     const action = event.target.closest('[data-dsh-action]')?.dataset?.dshAction;
     if (action === 'translate') await onTranslate();
     if (action === 'restore') onRestore();
+    if (action === 'stop') onStop();
     if (action === 'chat') await onChat();
     if (event.target.closest('[data-dsh-close]')) {
       // 关闭改为隐藏：同文档内模块 URL 相同，浏览器不会二次执行模块。

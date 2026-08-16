@@ -34,7 +34,7 @@ export function createGatewayClient(options = {}) {
     throw new TypeError('createGatewayClient: fetch is not available');
   }
 
-  async function request(endpoint, { method = 'GET', body, auth = true } = {}) {
+  async function request(endpoint, { method = 'GET', body, auth = true, signal } = {}) {
     const headers = { Accept: 'application/json' };
     if (auth && token) {
       headers[TOKEN_HEADER] = token;
@@ -44,6 +44,14 @@ export function createGatewayClient(options = {}) {
     }
 
     const controller = new AbortController();
+    const onExternalAbort = () => controller.abort();
+    if (signal) {
+      if (signal.aborted) {
+        controller.abort();
+      } else {
+        signal.addEventListener('abort', onExternalAbort, { once: true });
+      }
+    }
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     let response;
     try {
@@ -57,6 +65,7 @@ export function createGatewayClient(options = {}) {
       throw new GatewayClientError('NETWORK_ERROR', error.message ?? 'network error');
     } finally {
       clearTimeout(timer);
+      signal?.removeEventListener('abort', onExternalAbort);
     }
 
     let payload = null;
@@ -81,7 +90,8 @@ export function createGatewayClient(options = {}) {
     baseUrl,
     health: () => request('/v1/health', { auth: false }),
     handshake: () => request('/v1/handshake'),
-    translate: (payload) => request('/v1/translate', { method: 'POST', body: payload }),
+    translate: (payload, options = {}) =>
+      request('/v1/translate', { method: 'POST', body: payload, signal: options.signal }),
     chat: (payload) => request('/v1/chat', { method: 'POST', body: payload }),
   };
 }
