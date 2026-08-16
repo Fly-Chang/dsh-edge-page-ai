@@ -112,13 +112,15 @@ function bookmarkletPage(config) {
   const { host, port, token } = config.gateway;
   const base = `http://${host}:${port}`;
   const code =
-    `(()=>{if(window.__DSH_BOOTSTRAPPED__&&document.getElementById('dsh-page-ai-panel'))return;` +
-    `delete window.__DSH_BOOTSTRAPPED__;` +
-    `window.__DSH_BOOTSTRAPPED__=true;` +
+    `(()=>{const p=document.getElementById('dsh-page-ai-panel');` +
+    `if(p){p.style.display='';return;}` +
+    `if(document.querySelector('script[data-dsh-bootstrap="1"]'))return;` +
     `const s=document.createElement('script');` +
+    `s.dataset.dshBootstrap='1';` +
     `s.src='${base}/v1/bootstrap.js?token=${token}';` +
-    `s.onerror=()=>{delete window.__DSH_BOOTSTRAPPED__;` +
-    `alert('无法连接 DSH 网关：请确认 npm start 正在运行，然后刷新页面重试');};` +
+    `s.onload=()=>{s.remove();};` +
+    `s.onerror=()=>{s.remove();` +
+    `alert('无法连接 DSH 网关：请确认 npm start 正在运行，然后重试');};` +
     `document.documentElement.appendChild(s);})();`;
   const fullCode = `javascript:${code}`;
   const href = `javascript:${encodeURIComponent(code)}`;
@@ -186,13 +188,11 @@ document.getElementById('copy-code').addEventListener('click', () => {
 function bootstrapJs(config) {
   const { host, port, token } = config.gateway;
   const base = `http://${host}:${port}`;
-  return `(()=>{if(window.__DSH_BOOTSTRAPPED__&&document.getElementById('dsh-page-ai-panel'))return;` +
-    `delete window.__DSH_BOOTSTRAPPED__;` +
-    `window.__DSH_BOOTSTRAPPED__=true;` +
+  return `(()=>{const p=document.getElementById('dsh-page-ai-panel');` +
+    `if(p){p.style.display='';return;}` +
     `const s=document.createElement('script');s.type='module';` +
-    `s.src='${base}/v1/client.mjs?token=${token}';` +
-    `s.onerror=()=>{delete window.__DSH_BOOTSTRAPPED__;` +
-    `alert('无法加载 DSH 页面客户端：请刷新页面后重试');};` +
+    `s.src='${base}/v1/client.mjs?token=${token}&r='+Date.now();` +
+    `s.onerror=()=>{alert('无法加载 DSH 页面客户端：请刷新页面后重试');};` +
     `document.documentElement.appendChild(s);})();`;
 }
 

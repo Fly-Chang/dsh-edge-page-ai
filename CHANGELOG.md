@@ -25,6 +25,7 @@
 - `npm run build:edge-bridge` 找不到 `pwsh`（BUG-004）：改用 Windows PowerShell 5.1。
 - 书签说明页代码缺少 `javascript:` 前缀、易被收藏成说明页地址（BUG-006）：补全前缀，增加复制按钮与纠错提示。
 - 注入失败或面板关闭后 `__DSH_BOOTSTRAPPED__` 标志残留，再次点击书签无反应（BUG-007）：失败/关闭时清除标志、防重复判断改为“标志+面板存在”双重条件、增加可见错误提示。
+- 面板关闭后同文档无法二次执行模块，再次点击书签不显示（BUG-008）：关闭改为隐藏、检测已有面板时直接显示、`client.mjs` 增加 `&r=Date.now()` 缓存破坏。
 
 ### Known Issues
 

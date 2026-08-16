@@ -15,17 +15,27 @@ const TARGET_LANG = 'zh-CN';
 const SOURCE_LANG = 'en';
 const MAX_CHAT_ROWS = 40;
 
-if (window.__DSH_PANEL__) {
-  console.warn('[edge-page-ai] panel already injected');
-} else {
+function start() {
   try {
     bootstrap();
   } catch (error) {
-    // 初始化失败时清除书签侧置位的占位标志，允许用户刷新后/修复后再次点击书签重试。
-    delete window.__DSH_BOOTSTRAPPED__;
+    // 初始化失败时给出可见提示，避免“点击后无反应”。
     console.error('[edge-page-ai] client bootstrap failed', error);
     alert(`DSH 页面客户端初始化失败：${error?.message ?? error}`);
   }
+}
+
+if (window.__DSH_PANEL__) {
+  // 同一文档再次注入（例如缓存破坏 URL 重载）：已有面板则直接显示，不再创建第二个。
+  const existing = document.getElementById('dsh-page-ai-panel');
+  if (existing) {
+    existing.style.display = '';
+  } else {
+    delete window.__DSH_PANEL__;
+    start();
+  }
+} else {
+  start();
 }
 
 function bootstrap() {
@@ -200,10 +210,9 @@ function buildUi(gateway, state) {
     if (action === 'restore') onRestore();
     if (action === 'chat') await onChat();
     if (event.target.closest('[data-dsh-close]')) {
-      root.remove();
-      delete window.__DSH_PANEL__;
-      // 清除书签注入标志，允许用户关闭面板后再次点击书签重新打开。
-      delete window.__DSH_BOOTSTRAPPED__;
+      // 关闭改为隐藏：同文档内模块 URL 相同，浏览器不会二次执行模块。
+      // 隐藏后再次点击书签会直接重新显示，不需要刷新页面（BUG-008）。
+      root.style.display = 'none';
     }
   });
 
