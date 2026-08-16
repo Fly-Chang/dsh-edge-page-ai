@@ -35,6 +35,7 @@
 - 带 UTF-8 BOM 的 `config.local.json` 被误判为不存在并整文件覆盖（BUG-010）：解析前移除 BOM，损坏配置时拒绝覆盖并报错。
 - 双击批处理脚本中文注释在 GBK 控制台被误解码导致执行失败（BUG-011）：启动/停止脚本改为纯 ASCII + CRLF。
 - 静默启动脚本在端口被占用时仍提示启动成功（BUG-012）：增加健康检查，区分“已运行/启动成功/启动失败”三态。
+- 后台启动的网关进程读不到用户级 `DSH_MODEL_API_KEY`（BUG-014）：`loadConfig` 回退读取 `HKCU\Environment`。
 
 ### Known Issues
 

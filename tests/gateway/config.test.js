@@ -45,7 +45,7 @@ function withEnv(values, fn) {
   }
 }
 
-test('DSH_* 环境变量覆盖本地模型配置', (t) => {
+test('DSH_* process env overrides local model config', (t) => {
   const dir = makeTempConfig();
   t.after(() => rmSync(dir, { recursive: true, force: true }));
 
@@ -53,36 +53,35 @@ test('DSH_* 环境变量覆盖本地模型配置', (t) => {
     DSH_MODEL_API_KEY: 'env-key-123',
     DSH_MODEL_NAME: 'deepseek-v4-pro',
     DSH_MODEL_EXTRA_BODY: '{"thinking":{"type":"disabled"}}',
-  }, () => loadConfig({ cwd: dir }));
+  }, () => loadConfig({ cwd: dir, userEnvFallback: false }));
 
   assert.equal(config.model.apiKey, 'env-key-123');
   assert.equal(config.model.model, 'deepseek-v4-pro');
   assert.deepEqual(config.model.extraBody, { thinking: { type: 'disabled' } });
-  // 未覆盖的字段仍来自 config.local.json。
   assert.equal(config.model.baseUrl, 'https://api.deepseek.com');
   assert.equal(config.model.reasoning_effort, undefined);
 });
 
-test('DSH_MODEL_EXTRA_BODY 非法 JSON 时报错', (t) => {
+test('invalid DSH_MODEL_EXTRA_BODY throws', (t) => {
   const dir = makeTempConfig();
   t.after(() => rmSync(dir, { recursive: true, force: true }));
 
   assert.throws(
-    () => withEnv({ DSH_MODEL_EXTRA_BODY: 'not-json' }, () => loadConfig({ cwd: dir })),
+    () => withEnv({ DSH_MODEL_EXTRA_BODY: 'not-json' }, () => loadConfig({ cwd: dir, userEnvFallback: false })),
     /DSH_MODEL_EXTRA_BODY is not valid JSON/,
   );
 });
 
-test('无环境变量时密钥保持本地配置值', (t) => {
+test('without process env the local config value is kept', (t) => {
   const dir = makeTempConfig();
   t.after(() => rmSync(dir, { recursive: true, force: true }));
 
-  const config = withEnv({ DSH_MODEL_API_KEY: undefined }, () => loadConfig({ cwd: dir }));
+  const config = withEnv({ DSH_MODEL_API_KEY: undefined }, () => loadConfig({ cwd: dir, userEnvFallback: false }));
   assert.equal(config.model.apiKey, '');
   assert.deepEqual(config.model.extraBody, { thinking: { type: 'enabled' }, reasoning_effort: 'low' });
 });
 
-test('兼容 UTF-8 BOM 的 config.local.json 且不覆盖原文件', (t) => {
+test('UTF-8 BOM config.local.json is parsed and not overwritten', (t) => {
   const dir = makeTempConfig();
   t.after(() => rmSync(dir, { recursive: true, force: true }));
 
@@ -92,17 +91,16 @@ test('兼容 UTF-8 BOM 的 config.local.json 且不覆盖原文件', (t) => {
     model: { provider: 'openai-compatible', apiKey: 'bom-key' },
   })}`, 'utf8');
 
-  const config = loadConfig({ cwd: dir });
+  const config = loadConfig({ cwd: dir, userEnvFallback: false });
   assert.equal(config.gateway.token, 'bom-token');
   assert.equal(config.model.apiKey, 'bom-key');
-  // 原文件仍保持 BOM 且 token 未被重新生成。
   assert.match(readFileSync(file, 'utf8'), /bom-token/);
 });
 
-test('config.local.json 非法 JSON 时拒绝覆盖并报错', (t) => {
+test('invalid config.local.json is rejected instead of overwritten', (t) => {
   const dir = makeTempConfig();
   t.after(() => rmSync(dir, { recursive: true, force: true }));
 
   writeFileSync(join(dir, 'config.local.json'), '{not-json', 'utf8');
-  assert.throws(() => loadConfig({ cwd: dir }), /refusing to overwrite/);
+  assert.throws(() => loadConfig({ cwd: dir, userEnvFallback: false }), /refusing to overwrite/);
 });

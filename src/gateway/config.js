@@ -4,6 +4,7 @@
  * config.local.json 被 .gitignore 忽略，可安全保存密钥。
  */
 import { randomBytes } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -22,9 +23,37 @@ function writeJson(file, value) {
   writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
-function envOr(value, name) {
+/**
+ * 读取 Windows 用户级环境变量（HKCU\Environment）。
+ * 用于网关由旧进程/工具启动、未继承新设置的用户环境变量时回退读取。
+ * 非 Windows 或读取失败返回 undefined。
+ */
+function readUserEnvironment(name) {
+  try {
+    const output = execFileSync(
+      'reg',
+      ['query', 'HKCU\\Environment', '/v', name],
+      { encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] },
+    );
+    const match = output.match(new RegExp(`\\b${name}\\s+REG_(?:SZ|EXPAND_SZ)\\s+(.+)`, 'i'));
+    return match?.[1]?.trim();
+  } catch {
+    return undefined;
+  }
+}
+
+function envOr(value, name, userEnvFallback = true) {
   const raw = process.env[name];
-  return raw === undefined || raw === '' ? value : raw;
+  if (raw !== undefined && raw !== '') {
+    return raw;
+  }
+  if (userEnvFallback) {
+    const user = readUserEnvironment(name);
+    if (user !== undefined && user !== '') {
+      return user;
+    }
+  }
+  return value;
 }
 
 /**
@@ -48,10 +77,11 @@ export function loadConfig(options = {}) {
 
   const gateway = base.gateway ?? {};
   const model = base.model ?? {};
+  const userEnvFallback = options.userEnvFallback !== false;
 
-  const host = envOr(gateway.host ?? '127.0.0.1', 'DSH_GATEWAY_HOST');
-  const port = Number.parseInt(envOr(String(gateway.port ?? 8787), 'DSH_GATEWAY_PORT'), 10);
-  let token = envOr(gateway.token ?? '', 'DSH_GATEWAY_TOKEN');
+  const host = envOr(gateway.host ?? '127.0.0.1', 'DSH_GATEWAY_HOST', userEnvFallback);
+  const port = Number.parseInt(envOr(String(gateway.port ?? 8787), 'DSH_GATEWAY_PORT', userEnvFallback), 10);
+  let token = envOr(gateway.token ?? '', 'DSH_GATEWAY_TOKEN', userEnvFallback);
 
   if (!LOOPBACK_HOSTS.has(host)) {
     throw new Error(`refusing to bind non-loopback host: ${host}`);
@@ -90,19 +120,22 @@ export function loadConfig(options = {}) {
       token,
     },
     model: {
-      provider: envOr(model.provider ?? 'mock', 'DSH_MODEL_PROVIDER'),
-      baseUrl: envOr(model.baseUrl ?? 'https://api.openai.com/v1', 'DSH_MODEL_BASE_URL'),
-      apiKey: envOr(model.apiKey ?? '', 'DSH_MODEL_API_KEY'),
-      model: envOr(model.model ?? 'gpt-4o-mini', 'DSH_MODEL_NAME'),
-      timeoutMs: Number.parseInt(envOr(String(model.timeoutMs ?? 30000), 'DSH_MODEL_TIMEOUT_MS'), 10),
-      jsonMode: envOr(model.jsonMode ?? false, 'DSH_MODEL_JSON_MODE') === 'true',
-      extraBody: parseExtraBody(model.extraBody),
+      provider: envOr(model.provider ?? 'mock', 'DSH_MODEL_PROVIDER', userEnvFallback),
+      baseUrl: envOr(model.baseUrl ?? 'https://api.openai.com/v1', 'DSH_MODEL_BASE_URL', userEnvFallback),
+      apiKey: envOr(model.apiKey ?? '', 'DSH_MODEL_API_KEY', userEnvFallback),
+      model: envOr(model.model ?? 'gpt-4o-mini', 'DSH_MODEL_NAME', userEnvFallback),
+      timeoutMs: Number.parseInt(envOr(String(model.timeoutMs ?? 30000), 'DSH_MODEL_TIMEOUT_MS', userEnvFallback), 10),
+      jsonMode: envOr(model.jsonMode ?? false, 'DSH_MODEL_JSON_MODE', userEnvFallback) === 'true',
+      extraBody: parseExtraBody(model.extraBody, userEnvFallback),
     },
   };
 }
 
-function parseExtraBody(value) {
-  const fromEnv = process.env.DSH_MODEL_EXTRA_BODY;
+function parseExtraBody(value, userEnvFallback = true) {
+  let fromEnv = process.env.DSH_MODEL_EXTRA_BODY;
+  if ((fromEnv === undefined || fromEnv === '') && userEnvFallback) {
+    fromEnv = readUserEnvironment('DSH_MODEL_EXTRA_BODY');
+  }
   if (fromEnv) {
     try {
       value = JSON.parse(fromEnv);
