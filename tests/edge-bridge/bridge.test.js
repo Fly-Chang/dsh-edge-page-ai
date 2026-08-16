@@ -20,6 +20,7 @@ test('content.js 使用隔离世界动态导入，不注入页面 script', () =>
 
   assert.match(content, /import\(chrome\.runtime\.getURL\('bridge-client\.bundle\.mjs'\)\)/);
   assert.match(content, /__DSH_BRIDGE_CONFIG__/);
+  assert.match(content, /__DSH_BRIDGE_CONTENT_LOADED__/);
   assert.doesNotMatch(content, /createElement\('script'\)/);
   // Manual activation: must not auto-run ensurePanel on page load.
   assert.doesNotMatch(content, /^\s*void ensurePanel\(\);\s*$/m);
@@ -29,5 +30,6 @@ test('manifest 声明 bundle 为 web accessible resource', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'src/edge-bridge/manifest.json'), 'utf8'));
 
   assert.equal(manifest.manifest_version, 3);
+  assert.equal(manifest.permissions.includes('scripting'), true);
   assert.equal(manifest.web_accessible_resources[0].resources.includes('bridge-client.bundle.mjs'), true);
 });

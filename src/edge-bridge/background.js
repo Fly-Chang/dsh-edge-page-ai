@@ -4,10 +4,25 @@
  */
 
 async function toggleInTab(tabId) {
-  try {
-    await chrome.tabs.sendMessage(tabId, { type: 'dsh-toggle-panel' });
-  } catch {
-    // 页面无法接收（受限页面/未注入），静默失败。
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await chrome.tabs.sendMessage(tabId, { type: 'dsh-toggle-panel' });
+      return;
+    } catch {
+      if (attempt === 0) {
+        // The tab may have been open before the extension was reloaded.
+        // Inject the content script on demand, then try again.
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId },
+            files: ['content.js'],
+          });
+        } catch {
+          // Restricted page (edge://, store, etc.): cannot inject.
+          return;
+        }
+      }
+    }
   }
 }
 

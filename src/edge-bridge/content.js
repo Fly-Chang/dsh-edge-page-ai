@@ -5,6 +5,12 @@
  * restrictions that break bookmarklet mode (BUG-013).
  */
 (() => {
+  // Guard against double injection (declared content script + scripting.executeScript fallback).
+  if (globalThis.__DSH_BRIDGE_CONTENT_LOADED__) {
+    return;
+  }
+  globalThis.__DSH_BRIDGE_CONTENT_LOADED__ = true;
+
   const DEFAULT_GATEWAY_URL = 'http://127.0.0.1:8787';
   let loadPromise = null;
 

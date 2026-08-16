@@ -38,6 +38,7 @@
 - 双击批处理脚本中文注释在 GBK 控制台被误解码导致执行失败（BUG-011）：启动/停止脚本改为纯 ASCII + CRLF。
 - 静默启动脚本在端口被占用时仍提示启动成功（BUG-012）：增加健康检查，区分“已运行/启动成功/启动失败”三态。
 - 后台启动的网关进程读不到用户级 `DSH_MODEL_API_KEY`（BUG-014）：`loadConfig` 回退读取 `HKCU\Environment`。
+- 手动模式后旧页面无法调出面板（BUG-015）：后台在 sendMessage 失败时用 `chrome.scripting` 按需注入 content script，并增加防重复守卫。
 
 ### Known Issues
 
