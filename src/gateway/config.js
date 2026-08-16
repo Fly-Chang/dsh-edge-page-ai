@@ -67,6 +67,7 @@ export function loadConfig(options = {}) {
           model: model.model ?? 'gpt-4o-mini',
           timeoutMs: model.timeoutMs ?? 30000,
           jsonMode: model.jsonMode ?? false,
+          extraBody: model.extraBody ?? {},
         },
       };
       writeJson(localFile, created);
@@ -87,6 +88,25 @@ export function loadConfig(options = {}) {
       model: envOr(model.model ?? 'gpt-4o-mini', 'DSH_MODEL_NAME'),
       timeoutMs: Number.parseInt(envOr(String(model.timeoutMs ?? 30000), 'DSH_MODEL_TIMEOUT_MS'), 10),
       jsonMode: envOr(model.jsonMode ?? false, 'DSH_MODEL_JSON_MODE') === 'true',
+      extraBody: parseExtraBody(model.extraBody),
     },
   };
+}
+
+function parseExtraBody(value) {
+  const fromEnv = process.env.DSH_MODEL_EXTRA_BODY;
+  if (fromEnv) {
+    try {
+      value = JSON.parse(fromEnv);
+    } catch {
+      throw new Error('DSH_MODEL_EXTRA_BODY is not valid JSON');
+    }
+  }
+  if (value === undefined || value === null) {
+    return {};
+  }
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('model.extraBody must be a JSON object');
+  }
+  return value;
 }

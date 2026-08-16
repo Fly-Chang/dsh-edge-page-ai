@@ -16,6 +16,7 @@
 - Edge MV3 薄壳扩展：悬浮按钮、整页翻译、面板与随呼入口。
 - 单元测试：占位符保护、文本收集、回填与协议路由。
 - 手动测试指南（`docs/testing-guide.md`）与示例页面（`tests/fixtures/sample-page.html`）。
+- 模型请求 `extraBody` 透传，预置 DeepSeek V4 Flash 低思考模式配置（`reasoning_effort: "low"`）。
 
 ### Fixed
 

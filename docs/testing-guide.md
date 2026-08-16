@@ -93,7 +93,7 @@ Edge 打开 `http://127.0.0.1:8000/sample-page.html`。
 > `【译】` 是 mock 模式的**演示标记**，表示翻译请求和回填链路已跑通，不是真实译文。
 > 要看到中文译文，按第 6 节切换为真实模型。
 
-再点击「还原原文」，整页回到英文。翻译完成后点书签再次注入会提示“panel already injected”。
+再点击「还原原文」，整页回到英文。翻译完成后再次点击书签会直接重新显示已有面板，不会重复创建。
 
 ### 已知预期失败
 
@@ -127,21 +127,29 @@ Edge 打开 `http://127.0.0.1:8000/sample-page.html`。
 ## 6. 真实模型测试（需要 BYOK）
 
 1. 停止网关：在 `npm start` 窗口按 `Ctrl+C`。
-2. 编辑 `config.local.json`，例如：
+2. 编辑 `config.local.json`，DeepSeek V4 Flash 低思考模式示例：
 
 ```json
 {
   "gateway": { "host": "127.0.0.1", "port": 8787, "token": "<保持现有token不变>" },
   "model": {
     "provider": "openai-compatible",
-    "baseUrl": "https://api.openai.com/v1",
-    "apiKey": "<你的key>",
-    "model": "gpt-4o-mini",
-    "timeoutMs": 30000,
-    "jsonMode": false
+    "baseUrl": "https://api.deepseek.com",
+    "apiKey": "<你的 DeepSeek key>",
+    "model": "deepseek-v4-flash",
+    "timeoutMs": 60000,
+    "jsonMode": false,
+    "extraBody": {
+      "thinking": { "type": "enabled" },
+      "reasoning_effort": "low"
+    }
   }
 }
 ```
+
+说明：`extraBody` 会原样合并进 `/chat/completions` 请求体。DeepSeek V4 系列默认开启思考且
+effort 为 high；本项目的低思考模式即 `reasoning_effort: "low"`。
+参考：[DeepSeek 思考模式文档](https://api-docs.deepseek.com/zh-cn/guides/thinking_mode/)。
 
 3. 重新 `npm start`，刷新测试页面，点击「整页翻译」。
 4. 预期：正文变为中文，链接/邮箱/数字保留，页面结构不变。

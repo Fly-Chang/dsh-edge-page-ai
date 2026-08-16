@@ -6,10 +6,14 @@
   },
   "model": {
     "provider": "mock",
-    "baseUrl": "https://api.openai.com/v1",
+    "baseUrl": "https://api.deepseek.com",
     "apiKey": "",
-    "model": "gpt-4o-mini",
-    "timeoutMs": 30000,
-    "jsonMode": false
+    "model": "deepseek-v4-flash",
+    "timeoutMs": 60000,
+    "jsonMode": false,
+    "extraBody": {
+      "thinking": { "type": "enabled" },
+      "reasoning_effort": "low"
+    }
   }
 }

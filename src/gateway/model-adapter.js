@@ -76,9 +76,12 @@ function mockTranslateText(text) {
 
 /**
  * @param {object} config 由 loadConfig 返回的完整配置
+ * @param {object} [options]
+ * @param {typeof fetch} [options.fetchImpl] 测试注入用
  */
-export function createModelAdapter(config) {
+export function createModelAdapter(config, options = {}) {
   const modelConfig = config.model ?? {};
+  const fetchImpl = options.fetchImpl ?? globalThis.fetch;
 
   async function callOpenAi(messages) {
     const baseUrl = normalizeBaseUrl(modelConfig.baseUrl);
@@ -91,10 +94,13 @@ export function createModelAdapter(config) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     };
+    // extraBody 用于透传厂商扩展参数，例如 DeepSeek V4 Flash 低思考模式：
+    // { "thinking": { "type": "enabled" }, "reasoning_effort": "low" }
     const body = {
       model: modelConfig.model,
       temperature: 0.1,
       messages,
+      ...(modelConfig.extraBody ?? {}),
     };
     if (modelConfig.jsonMode) {
       body.response_format = { type: 'json_object' };
@@ -106,7 +112,7 @@ export function createModelAdapter(config) {
 
     let response;
     try {
-      response = await fetch(`${baseUrl}/chat/completions`, {
+      response = await fetchImpl(`${baseUrl}/chat/completions`, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
