@@ -424,7 +424,7 @@ export function toTranslateItems(units, { includeContext = true } = {}) {
  * 将译文写回文本节点。translationsById 的值必须是已经还原占位符的最终文本。
  * @returns {{ applied: number, failed: { id: string, reason: string }[] }}
  */
-export function applyTranslations(units, translationsById) {
+export function applyTranslations(units, translationsById, { mark = true } = {}) {
   const failed = [];
   let applied = 0;
 
@@ -438,7 +438,7 @@ export function applyTranslations(units, translationsById) {
     applied += 1;
   }
 
-  if (applied > 0) {
+  if (mark && applied > 0) {
     markTranslatedParents(units, translationsById);
   }
   return { applied, failed };
@@ -598,6 +598,24 @@ function chunk(items, size) {
   return out;
 }
 
+export const TRANSLATE_BATCH_SIZE = 30;
+export const TRANSLATE_CONCURRENCY = 3;
+
+async function runPool(items, worker, concurrency) {
+  let nextIndex = 0;
+  const runners = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (true) {
+      const index = nextIndex;
+      nextIndex += 1;
+      if (index >= items.length) {
+        return;
+      }
+      await worker(items[index], index);
+    }
+  });
+  await Promise.all(runners);
+}
+
 /**
  * @param {object} options
  * @param {Element|Document} options.root
@@ -605,6 +623,8 @@ function chunk(items, size) {
  * @param {string} [options.targetLang='zh-CN']
  * @param {string} [options.sourceLang='en']
  * @param {(phase: string, done: number, total: number) => void} [options.onProgress]
+ * @param {number} [options.batchSize=TRANSLATE_BATCH_SIZE]
+ * @param {number} [options.concurrency=TRANSLATE_CONCURRENCY]
  * @returns {Promise<{ units: object[], applied: number, failed: object[], batches: number }>}
  */
 export async function translatePage(options) {
@@ -614,6 +634,8 @@ export async function translatePage(options) {
     targetLang = 'zh-CN',
     sourceLang = 'en',
     onProgress = () => {},
+    batchSize = TRANSLATE_BATCH_SIZE,
+    concurrency = TRANSLATE_CONCURRENCY,
   } = options;
 
   const { units } = collectTextUnits(root, { includeContext: true });
@@ -630,65 +652,93 @@ export async function translatePage(options) {
     protectedByUnit.set(unit.id, { protectedText, placeholders });
   }
 
-  const batches = chunk(
-    units.map((unit) => {
-      const { protectedText } = protectedByUnit.get(unit.id);
-      const item = { id: unit.id, text: protectedText };
-      if (unit.contextBefore) {
-        item.contextBefore = unit.contextBefore;
-      }
-      if (unit.contextAfter) {
-        item.contextAfter = unit.contextAfter;
-      }
-      return item;
-    }),
-    LIMITS.MAX_ITEMS_PER_REQUEST,
-  );
+  const items = units.map((unit) => {
+    const { protectedText } = protectedByUnit.get(unit.id);
+    const item = { id: unit.id, text: protectedText };
+    if (unit.contextBefore) {
+      item.contextBefore = unit.contextBefore;
+    }
+    if (unit.contextAfter) {
+      item.contextAfter = unit.contextAfter;
+    }
+    return item;
+  });
+  const batches = chunk(items, batchSize);
 
   const translationsById = {};
   const failed = [];
+  const failedIds = new Set();
   let processed = 0;
+  let applied = 0;
 
-  for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
-    const response = await gateway.translate({
-      protocol: 1,
-      sourceLang,
-      targetLang,
-      items: batches[batchIndex],
-    });
-
-    if (!Array.isArray(response?.items)) {
-      throw new Error('gateway.translate returned an invalid response');
+  const recordFailure = (id, reason, message) => {
+    if (!failedIds.has(id)) {
+      failedIds.add(id);
+      failed.push(message ? { id, reason, message } : { id, reason });
     }
+  };
 
-    for (const translatedItem of response.items) {
-      const unit = byId.get(translatedItem?.id);
-      if (!unit) {
-        failed.push({ id: translatedItem?.id ?? '<unknown>', reason: 'unknown-id' });
-        continue;
+  await runPool(batches, async (batch) => {
+    const batchUnits = batch.map((item) => byId.get(item.id)).filter(Boolean);
+    const batchTranslations = {};
+
+    try {
+      const response = await gateway.translate({
+        protocol: 1,
+        sourceLang,
+        targetLang,
+        items: batch,
+      });
+
+      if (!Array.isArray(response?.items)) {
+        throw new Error('gateway.translate returned an invalid response');
       }
-      const { placeholders } = protectedByUnit.get(unit.id);
-      const { restoredText, missing, unknown } = restore(translatedItem.text ?? '', placeholders);
-      if (missing.length > 0 || unknown.length > 0) {
-        failed.push({ id: unit.id, reason: 'placeholder-mismatch' });
-        continue;
+
+      for (const translatedItem of response.items) {
+        const unit = byId.get(translatedItem?.id);
+        if (!unit) {
+          recordFailure(translatedItem?.id ?? '<unknown>', 'unknown-id');
+          continue;
+        }
+        const { placeholders } = protectedByUnit.get(unit.id);
+        const { restoredText, missing, unknown } = restore(translatedItem.text ?? '', placeholders);
+        if (missing.length > 0 || unknown.length > 0) {
+          recordFailure(unit.id, 'placeholder-mismatch');
+          continue;
+        }
+        translationsById[unit.id] = restoredText;
+        batchTranslations[unit.id] = restoredText;
       }
-      translationsById[unit.id] = restoredText;
+
+      // A: 每批完成立即回填，页面渐进变中文；先不做 data-dsh-tr 标记，
+      // 等全部批次完成后统一标记，避免跨批父元素被提前误标。
+      const result = applyTranslations(batchUnits, batchTranslations, { mark: false });
+      applied += result.applied;
+      for (const failure of result.failed) {
+        recordFailure(failure.id, failure.reason);
+      }
+    } catch (error) {
+      // 单批失败不中断整页：记录失败，保留原文，继续其他批次。
+      for (const unit of batchUnits) {
+        recordFailure(unit.id, 'gateway-error', error?.message ?? String(error));
+      }
+    } finally {
+      processed += batch.length;
+      onProgress('translate', processed, units.length);
     }
-
-    processed += batches[batchIndex].length;
-    onProgress('translate', processed, units.length);
-  }
+  }, concurrency);
 
   // 模型漏掉的单元保留原文。
   for (const unit of units) {
     if (!(unit.id in translationsById)) {
-      failed.push({ id: unit.id, reason: 'missing-from-model-response' });
+      recordFailure(unit.id, 'missing-from-model-response');
     }
   }
 
-  const result = applyTranslations(units, translationsById);
-  return { units, applied: result.applied, failed: [...failed, ...result.failed], batches: batches.length };
+  // 全部完成后统一标记已翻译父元素，保证下次收集的幂等性。
+  markTranslatedParents(units, translationsById);
+
+  return { units, applied, failed, batches: batches.length };
 }
 
 /**

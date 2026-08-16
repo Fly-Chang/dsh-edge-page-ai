@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {
   restoreOriginals,
   snapshotOriginals,
+  toBatches,
+  TRANSLATE_BATCH_SIZE,
+  TRANSLATE_CONCURRENCY,
 } from '../../src/core/page-translator.js';
 
 function makeParent() {
@@ -58,4 +61,13 @@ test('还原后再次翻译的收集前置条件：已翻译标记被清除', ()
   // 标记被移除后，collectTextUnits 才不会跳过该节点。
   assert.equal(parent.hasAttribute('data-dsh-tr'), false);
   assert.equal(node.nodeValue, 'Hello');
+});
+
+test('A+C 优化参数：小批尺寸与并发度', () => {
+  assert.equal(TRANSLATE_BATCH_SIZE, 30);
+  assert.equal(TRANSLATE_CONCURRENCY, 3);
+
+  const batches = toBatches(Array.from({ length: 70 }, (_, index) => index), TRANSLATE_BATCH_SIZE);
+  assert.equal(batches.length, 3);
+  assert.deepEqual(batches.map((batch) => batch.length), [30, 30, 10]);
 });

@@ -11,6 +11,7 @@
     "model": "deepseek-v4-flash",
     "timeoutMs": 60000,
     "jsonMode": false,
+    "disableThinkingForTranslate": true,
     "extraBody": {
       "thinking": { "type": "enabled" },
       "reasoning_effort": "low"

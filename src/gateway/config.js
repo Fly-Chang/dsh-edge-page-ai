@@ -126,9 +126,14 @@ export function loadConfig(options = {}) {
       model: envOr(model.model ?? 'gpt-4o-mini', 'DSH_MODEL_NAME', userEnvFallback),
       timeoutMs: Number.parseInt(envOr(String(model.timeoutMs ?? 30000), 'DSH_MODEL_TIMEOUT_MS', userEnvFallback), 10),
       jsonMode: envOr(model.jsonMode ?? false, 'DSH_MODEL_JSON_MODE', userEnvFallback) === 'true',
+      disableThinkingForTranslate: toBoolean(envOr(model.disableThinkingForTranslate ?? false, 'DSH_MODEL_DISABLE_THINKING_TRANSLATE', userEnvFallback)),
       extraBody: parseExtraBody(model.extraBody, userEnvFallback),
     },
   };
+}
+
+function toBoolean(value) {
+  return value === true || value === 'true';
 }
 
 function parseExtraBody(value, userEnvFallback = true) {

@@ -177,7 +177,7 @@ export function toTranslateItems(units, { includeContext = true } = {}) {
  * 将译文写回文本节点。translationsById 的值必须是已经还原占位符的最终文本。
  * @returns {{ applied: number, failed: { id: string, reason: string }[] }}
  */
-export function applyTranslations(units, translationsById) {
+export function applyTranslations(units, translationsById, { mark = true } = {}) {
   const failed = [];
   let applied = 0;
 
@@ -191,7 +191,7 @@ export function applyTranslations(units, translationsById) {
     applied += 1;
   }
 
-  if (applied > 0) {
+  if (mark && applied > 0) {
     markTranslatedParents(units, translationsById);
   }
   return { applied, failed };

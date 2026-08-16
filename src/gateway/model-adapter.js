@@ -83,7 +83,7 @@ export function createModelAdapter(config, options = {}) {
   const modelConfig = config.model ?? {};
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
 
-  async function callOpenAi(messages) {
+  async function callOpenAi(messages, bodyOverrides = {}) {
     const baseUrl = normalizeBaseUrl(modelConfig.baseUrl);
     const apiKey = String(modelConfig.apiKey ?? '');
     if (!apiKey) {
@@ -96,11 +96,13 @@ export function createModelAdapter(config, options = {}) {
     };
     // extraBody 用于透传厂商扩展参数，例如 DeepSeek V4 Flash 低思考模式：
     // { "thinking": { "type": "enabled" }, "reasoning_effort": "low" }
+    // bodyOverrides 只影响单次请求；翻译请求用它关闭思考（B 方案）。
     const body = {
       model: modelConfig.model,
       temperature: 0.1,
       messages,
       ...(modelConfig.extraBody ?? {}),
+      ...bodyOverrides,
     };
     if (modelConfig.jsonMode) {
       body.response_format = { type: 'json_object' };
@@ -157,11 +159,16 @@ export function createModelAdapter(config, options = {}) {
       },
     ];
 
+    // B plan: disable thinking for translation requests, keep low thinking for chat.
+    const translateOverrides = modelConfig.disableThinkingForTranslate === true
+      ? { thinking: { type: 'disabled' } }
+      : {};
+
     let lastError = null;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       let raw;
       try {
-        raw = await callOpenAi(messages);
+        raw = await callOpenAi(messages, translateOverrides);
       } catch (error) {
         throw error;
       }
