@@ -126,8 +126,24 @@ Edge 打开 `http://127.0.0.1:8000/sample-page.html`。
 
 ## 6. 真实模型测试（需要 BYOK）
 
-1. 停止网关：在 `npm start` 窗口按 `Ctrl+C`。
-2. 编辑 `config.local.json`，DeepSeek V4 Flash 低思考模式示例：
+### 方式 A：DSH 环境变量（推荐，密钥不落盘到仓库内文件）
+
+1. 设置用户级环境变量（一次性；命令中的 `sk-...` 换成真实密钥）：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/set-dsh-model-env.ps1 -ApiKey "sk-你的DeepSeek密钥"
+```
+
+2. 检查（密钥只显示前 4 位和后 4 位）：
+
+```powershell
+npm run env:check
+```
+
+3. **关闭并重新打开** PowerShell（让用户环境变量生效），然后 `npm start`。
+4. 刷新测试页面，点击「整页翻译」。
+
+### 方式 B：直接编辑 `config.local.json`（降级方案）
 
 ```json
 {
@@ -151,8 +167,9 @@ Edge 打开 `http://127.0.0.1:8000/sample-page.html`。
 effort 为 high；本项目的低思考模式即 `reasoning_effort: "low"`。
 参考：[DeepSeek 思考模式文档](https://api-docs.deepseek.com/zh-cn/guides/thinking_mode/)。
 
-3. 重新 `npm start`，刷新测试页面，点击「整页翻译」。
-4. 预期：正文变为中文，链接/邮箱/数字保留，页面结构不变。
+### 预期
+
+正文变为中文，链接/邮箱/数字保留，页面结构不变。
 
 ### 真实模型排错
 

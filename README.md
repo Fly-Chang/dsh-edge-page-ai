@@ -29,16 +29,24 @@ scripts/          启动/构建脚本
 ## 快速开始
 
 ```powershell
-# 1. 复制配置并填写模型端点与密钥
-Copy-Item config.example.json config.local.json
+# 1. 把模型密钥绑定到 DSH_* 环境变量（仅一次；重启终端后生效）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/set-dsh-model-env.ps1 -ApiKey "sk-你的DeepSeek密钥"
 
-# 2. 启动本地网关
+# 2. 检查环境变量（密钥只显示前4位/后4位）
+npm run env:check
+
+# 3. 启动本地网关（网关优先读取 DSH_* 环境变量）
 npm start
 
-# 3. 浏览器安装入口（二选一）
+# 4. 浏览器安装入口（二选一）
 #    a) 书签模式：打开 http://127.0.0.1:8787/v1/bookmarklet ，按页面说明使用
 #    b) 薄壳扩展：edge://extensions → 开发者模式 → 加载 src/edge-bridge
 ```
+
+> 密钥不写入 `config.local.json`。环境变量名与覆盖规则见
+> `src/gateway/config.js`；支持 `DSH_MODEL_API_KEY`、`DSH_MODEL_PROVIDER`、
+> `DSH_MODEL_BASE_URL`、`DSH_MODEL_NAME`、`DSH_MODEL_TIMEOUT_MS`、
+> `DSH_MODEL_JSON_MODE`、`DSH_MODEL_EXTRA_BODY`。
 
 ## 测试
 
@@ -52,4 +60,5 @@ npm test
 - 协议规格：`docs/specs/gateway-protocol-v1.md`
 - 架构说明：`docs/architecture.md`
 - 测试指南：`docs/testing-guide.md`
+- 后续路线：`docs/roadmap.md`
 - 变更日志：`CHANGELOG.md`

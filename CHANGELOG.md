@@ -17,6 +17,8 @@
 - 单元测试：占位符保护、文本收集、回填与协议路由。
 - 手动测试指南（`docs/testing-guide.md`）与示例页面（`tests/fixtures/sample-page.html`）。
 - 模型请求 `extraBody` 透传，预置 DeepSeek V4 Flash 低思考模式配置（`reasoning_effort: "low"`）。
+- `DSH_*` 模型环境变量绑定：设置/检查脚本（`scripts/set-dsh-model-env.ps1`、`scripts/check-dsh-model-env.ps1`），密钥不写入本地配置。
+- 项目路线图（`docs/roadmap.md`）。
 
 ### Fixed
 
