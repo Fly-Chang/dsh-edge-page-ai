@@ -6,6 +6,7 @@ import { LIMITS } from '../shared/protocol.js';
 import {
   applyTranslations,
   collectTextUnits,
+  MARK_TRANSLATED_ATTR,
   toTranslateItems,
 } from './text-collector.js';
 import { protect, restore } from './placeholder-protector.js';
@@ -113,14 +114,17 @@ export async function translatePage(options) {
 
 /**
  * 记录原文快照，供“还原原文”使用。
+ * 除文本外同时记录父元素，还原时清除 data-dsh-tr 标记，
+ * 保证还原后可以再次执行整页翻译（BUG-009）。
  * @param {object[]} units
- * @returns {Map<string, { node: Text, lead: string, text: string, trail: string }>}
+ * @returns {Map<string, { node: Text, parent: Element, lead: string, text: string, trail: string }>}
  */
 export function snapshotOriginals(units) {
   const map = new Map();
   for (const unit of units) {
     map.set(unit.id, {
       node: unit.node,
+      parent: unit.parent ?? unit.node?.parentElement ?? null,
       lead: unit.lead,
       text: unit.text,
       trail: unit.trail,
@@ -129,14 +133,19 @@ export function snapshotOriginals(units) {
   return map;
 }
 
-/** 用快照还原原文；返回还原数量。 */
+/** 用快照还原原文；同时移除相关父元素的已翻译标记。返回还原数量。 */
 export function restoreOriginals(snapshotMap) {
-  let count = 0;
+  const parents = new Set();
   for (const entry of snapshotMap.values()) {
     entry.node.nodeValue = entry.lead + entry.text + entry.trail;
-    count += 1;
+    if (entry.parent?.removeAttribute) {
+      parents.add(entry.parent);
+    }
   }
-  return count;
+  for (const parent of parents) {
+    parent.removeAttribute(MARK_TRANSLATED_ATTR);
+  }
+  return snapshotMap.size;
 }
 
 /** 供页面 UI 使用的批处理小工具。 */
