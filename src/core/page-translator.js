@@ -7,7 +7,6 @@ import {
   applyTranslations,
   collectTextUnits,
   MARK_TRANSLATED_ATTR,
-  toTranslateItems,
 } from './text-collector.js';
 import { protect, restore } from './placeholder-protector.js';
 
@@ -152,5 +151,3 @@ export function restoreOriginals(snapshotMap) {
 export function toBatches(items, size = LIMITS.MAX_ITEMS_PER_REQUEST) {
   return chunk(items, size);
 }
-
-export { toTranslateItems };

@@ -19,6 +19,12 @@
     "default_title": "DSH 页面助手"
   },
   "options_page": "options.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["bridge-client.bundle.mjs"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
   "commands": {
     "toggle-dsh-panel": {
       "suggested_key": {

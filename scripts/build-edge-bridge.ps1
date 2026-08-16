@@ -6,6 +6,8 @@ $source = Join-Path $root 'src/edge-bridge'
 $dist = Join-Path $root 'dist'
 $zip = Join-Path $dist 'edge-bridge.zip'
 
+& node (Join-Path $root 'scripts/build-page-client.mjs')
+
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 if (Test-Path $zip) {
   Remove-Item $zip -Force

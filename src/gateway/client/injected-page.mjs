@@ -10,18 +10,32 @@ import {
   translatePage,
 } from '../../core/page-translator.js';
 
-const TOKEN = new URL(import.meta.url).searchParams.get('token') ?? '';
+const BRIDGE_CONFIG = globalThis.__DSH_BRIDGE_CONFIG__ ?? null;
+const TOKEN = new URL(import.meta.url).searchParams.get('token') ?? BRIDGE_CONFIG?.token ?? '';
+const BASE_URL = BRIDGE_CONFIG?.gatewayUrl ?? undefined;
 const TARGET_LANG = 'zh-CN';
 const SOURCE_LANG = 'en';
 const MAX_CHAT_ROWS = 40;
+
+function notify(message) {
+  // 页面主世界可用 alert；扩展隔离世界没有 alert，降级到 console/status。
+  if (typeof globalThis.alert === 'function') {
+    try {
+      globalThis.alert(message);
+      return;
+    } catch {
+      // fall through
+    }
+  }
+  console.error('[edge-page-ai]', message);
+}
 
 function start() {
   try {
     bootstrap();
   } catch (error) {
     // 初始化失败时给出可见提示，避免“点击后无反应”。
-    console.error('[edge-page-ai] client bootstrap failed', error);
-    alert(`DSH 页面客户端初始化失败：${error?.message ?? error}`);
+    notify(`DSH 页面客户端初始化失败：${error?.message ?? error}`);
   }
 }
 
@@ -39,15 +53,27 @@ if (window.__DSH_PANEL__) {
 }
 
 function bootstrap() {
-  const gateway = createGatewayClient({ token: TOKEN, timeoutMs: 180_000 });
+  const gateway = createGatewayClient({
+    baseUrl: BASE_URL,
+    token: TOKEN,
+    timeoutMs: 180_000,
+  });
   const state = {
     originals: new Map(),
     busy: false,
     handshakeOk: false,
   };
 
-  window.__DSH_PANEL__ = { gateway, state };
-  buildUi(gateway, state);
+  const ui = buildUi(gateway, state);
+  const panelApi = {
+    gateway,
+    state,
+    show: ui.show,
+    hide: ui.hide,
+    toggle: ui.toggle,
+  };
+  window.__DSH_PANEL__ = panelApi;
+  globalThis.__DSH_BRIDGE_PANEL__ = panelApi;
 }
 
 function buildUi(gateway, state) {
@@ -194,14 +220,25 @@ function buildUi(gateway, state) {
     return `出错：${error?.message ?? error}`;
   }
 
+  const show = () => {
+    root.style.display = '';
+  };
+  const hide = () => {
+    root.style.display = 'none';
+  };
+  const toggle = () => {
+    if (root.style.display === 'none') {
+      show();
+    } else {
+      hide();
+    }
+  };
+
   window.addEventListener('message', (event) => {
     if (event.source !== window) return;
     if (event.data?.source !== 'dsh-page-ai-bridge') return;
     if (event.data?.type !== 'toggle-panel') return;
-    const current = document.getElementById('dsh-page-ai-panel');
-    if (current) {
-      current.style.display = current.style.display === 'none' ? '' : 'none';
-    }
+    toggle();
   });
 
   root.addEventListener('click', async (event) => {
@@ -211,8 +248,8 @@ function buildUi(gateway, state) {
     if (action === 'chat') await onChat();
     if (event.target.closest('[data-dsh-close]')) {
       // 关闭改为隐藏：同文档内模块 URL 相同，浏览器不会二次执行模块。
-      // 隐藏后再次点击书签会直接重新显示，不需要刷新页面（BUG-008）。
-      root.style.display = 'none';
+      // 隐藏后再次点击书签/扩展图标会直接重新显示，不需要刷新页面（BUG-008）。
+      hide();
     }
   });
 
@@ -225,6 +262,8 @@ function buildUi(gateway, state) {
   }).catch((error) => {
     setStatus(friendlyError(error), true);
   });
+
+  return { show, hide, toggle };
 }
 
 function makeDraggable(root, handle) {

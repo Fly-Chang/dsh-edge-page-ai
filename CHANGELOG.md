@@ -20,6 +20,7 @@
 - `DSH_*` 模型环境变量绑定：设置/检查脚本（`scripts/set-dsh-model-env.ps1`、`scripts/check-dsh-model-env.ps1`），密钥不写入本地配置。
 - 项目路线图（`docs/roadmap.md`）。
 - 双击启动方式：前台 `start-gateway.bat`、静默后台 `start-gateway-silent.vbs`、停止 `stop-gateway.bat`、打开书签页 `open-bookmarklet.bat`。
+- Edge 薄壳扩展隔离世界客户端：`bridge-client.bundle.mjs` + 本地打包器，不向页面注入 `<script>`，可绕开严格 CSP/本地网络访问限制（BUG-013）。
 
 ### Fixed
 
@@ -37,4 +38,5 @@
 
 ### Known Issues
 
-- 严格 CSP 页面会拦截书签/薄壳注入的外部脚本，面板不可用（BUG-005，计划 Phase 2 用隔离世界方案修复）。
+- 严格 CSP 页面会拦截**书签模式**注入的外部脚本（BUG-005，in-progress）；薄壳扩展已改为隔离世界方案（BUG-013，待真机验证）。
+- 外部站点书签模式可能被页面 CSP / 本地网络访问策略拦截（BUG-013）；请使用 Edge 薄壳扩展。
