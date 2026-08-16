@@ -35,8 +35,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/set-dsh-model-env.ps
 # 2. 检查环境变量（密钥只显示前4位/后4位）
 npm run env:check
 
-# 3. 启动本地网关（网关优先读取 DSH_* 环境变量）
-npm start
+# 3. 启动本地网关（推荐：双击 scripts\start-gateway.bat；或命令行 npm start）
+#    静默后台方式：双击 scripts\start-gateway-silent.vbs（日志在 logs\gateway.log）
+#    停止：双击 scripts\stop-gateway.bat
 
 # 4. 浏览器安装入口（二选一）
 #    a) 书签模式：打开 http://127.0.0.1:8787/v1/bookmarklet ，按页面说明使用

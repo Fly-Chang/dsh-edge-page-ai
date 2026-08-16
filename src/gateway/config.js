@@ -4,14 +4,15 @@
  * config.local.json 被 .gitignore 忽略，可安全保存密钥。
  */
 import { randomBytes } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 export const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
 
 function readJson(file) {
   try {
-    return JSON.parse(readFileSync(file, 'utf8'));
+    // 兼容 Windows PowerShell 5.1 写出的 UTF-8 BOM 文件（BUG-010）。
+    return JSON.parse(readFileSync(file, 'utf8').replace(/^\uFEFF/, ''));
   } catch {
     return null;
   }
@@ -35,7 +36,14 @@ export function loadConfig(options = {}) {
   const localFile = resolve(cwd, 'config.local.json');
   const exampleFile = resolve(cwd, 'config.example.json');
 
+  const localExists = existsSync(localFile);
   const localRaw = readJson(localFile);
+  if (localExists && !localRaw) {
+    throw new Error(
+      `config.local.json exists but is not valid JSON; refusing to overwrite it. ` +
+      `Fix or delete the file and try again.`,
+    );
+  }
   const base = localRaw ?? readJson(exampleFile) ?? {};
 
   const gateway = base.gateway ?? {};

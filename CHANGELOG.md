@@ -19,6 +19,7 @@
 - 模型请求 `extraBody` 透传，预置 DeepSeek V4 Flash 低思考模式配置（`reasoning_effort: "low"`）。
 - `DSH_*` 模型环境变量绑定：设置/检查脚本（`scripts/set-dsh-model-env.ps1`、`scripts/check-dsh-model-env.ps1`），密钥不写入本地配置。
 - 项目路线图（`docs/roadmap.md`）。
+- 双击启动方式：前台 `start-gateway.bat`、静默后台 `start-gateway-silent.vbs`、停止 `stop-gateway.bat`、打开书签页 `open-bookmarklet.bat`。
 
 ### Fixed
 
@@ -30,6 +31,7 @@
 - 注入失败或面板关闭后 `__DSH_BOOTSTRAPPED__` 标志残留，再次点击书签无反应（BUG-007）：失败/关闭时清除标志、防重复判断改为“标志+面板存在”双重条件、增加可见错误提示。
 - 面板关闭后同文档无法二次执行模块，再次点击书签不显示（BUG-008）：关闭改为隐藏、检测已有面板时直接显示、`client.mjs` 增加 `&r=Date.now()` 缓存破坏。
 - 还原原文后 `data-dsh-tr` 标记未清除，再次翻译无效（BUG-009）：还原时清除相关父元素标记。
+- 带 UTF-8 BOM 的 `config.local.json` 被误判为不存在并整文件覆盖（BUG-010）：解析前移除 BOM，损坏配置时拒绝覆盖并报错。
 
 ### Known Issues
 

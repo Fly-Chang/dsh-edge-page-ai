@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { loadConfig } from '../../src/gateway/config.js';
@@ -80,4 +80,29 @@ test('无环境变量时密钥保持本地配置值', (t) => {
   const config = withEnv({ DSH_MODEL_API_KEY: undefined }, () => loadConfig({ cwd: dir }));
   assert.equal(config.model.apiKey, '');
   assert.deepEqual(config.model.extraBody, { thinking: { type: 'enabled' }, reasoning_effort: 'low' });
+});
+
+test('兼容 UTF-8 BOM 的 config.local.json 且不覆盖原文件', (t) => {
+  const dir = makeTempConfig();
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+
+  const file = join(dir, 'config.local.json');
+  writeFileSync(file, `\uFEFF${JSON.stringify({
+    gateway: { host: '127.0.0.1', port: 8787, token: 'bom-token' },
+    model: { provider: 'openai-compatible', apiKey: 'bom-key' },
+  })}`, 'utf8');
+
+  const config = loadConfig({ cwd: dir });
+  assert.equal(config.gateway.token, 'bom-token');
+  assert.equal(config.model.apiKey, 'bom-key');
+  // 原文件仍保持 BOM 且 token 未被重新生成。
+  assert.match(readFileSync(file, 'utf8'), /bom-token/);
+});
+
+test('config.local.json 非法 JSON 时拒绝覆盖并报错', (t) => {
+  const dir = makeTempConfig();
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+
+  writeFileSync(join(dir, 'config.local.json'), '{not-json', 'utf8');
+  assert.throws(() => loadConfig({ cwd: dir }), /refusing to overwrite/);
 });

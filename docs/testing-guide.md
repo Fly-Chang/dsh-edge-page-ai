@@ -15,6 +15,14 @@
 - Edge 浏览器。
 - 项目根目录为 `F:\AI_worker\Edge-page-ai`。
 
+启动网关有三种方式（选择一种即可）：
+
+1. 双击 `scripts\start-gateway.bat`（前台，窗口显示日志）；
+2. 双击 `scripts\start-gateway-silent.vbs`（后台静默，日志在 `logs\gateway.log`）；
+3. 命令行 `npm start`（开发调试用）。
+
+停止网关：双击 `scripts\stop-gateway.bat`。打开书签说明页：双击 `scripts\open-bookmarklet.bat`。
+
 ## 1. 自动化测试（1 分钟）
 
 ```powershell
