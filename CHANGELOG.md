@@ -24,7 +24,7 @@
 - `/v1/client.mjs` 与 `/core`、`/shared` 静态路由返回 404（BUG-003）：改用 `fs/promises`。
 - `npm run build:edge-bridge` 找不到 `pwsh`（BUG-004）：改用 Windows PowerShell 5.1。
 - 书签说明页代码缺少 `javascript:` 前缀、易被收藏成说明页地址（BUG-006）：补全前缀，增加复制按钮与纠错提示。
-- 注入失败或面板关闭后 `__DSH_BOOTSTRAPPED__` 标志残留，再次点击书签无反应（BUG-007）：失败/关闭时清除标志并增加可见错误提示。
+- 注入失败或面板关闭后 `__DSH_BOOTSTRAPPED__` 标志残留，再次点击书签无反应（BUG-007）：失败/关闭时清除标志、防重复判断改为“标志+面板存在”双重条件、增加可见错误提示。
 
 ### Known Issues
 

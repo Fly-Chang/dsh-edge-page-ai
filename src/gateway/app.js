@@ -112,7 +112,8 @@ function bookmarkletPage(config) {
   const { host, port, token } = config.gateway;
   const base = `http://${host}:${port}`;
   const code =
-    `(()=>{if(window.__DSH_BOOTSTRAPPED__)return;` +
+    `(()=>{if(window.__DSH_BOOTSTRAPPED__&&document.getElementById('dsh-page-ai-panel'))return;` +
+    `delete window.__DSH_BOOTSTRAPPED__;` +
     `window.__DSH_BOOTSTRAPPED__=true;` +
     `const s=document.createElement('script');` +
     `s.src='${base}/v1/bootstrap.js?token=${token}';` +
@@ -185,7 +186,8 @@ document.getElementById('copy-code').addEventListener('click', () => {
 function bootstrapJs(config) {
   const { host, port, token } = config.gateway;
   const base = `http://${host}:${port}`;
-  return `(()=>{if(window.__DSH_BOOTSTRAPPED__)return;` +
+  return `(()=>{if(window.__DSH_BOOTSTRAPPED__&&document.getElementById('dsh-page-ai-panel'))return;` +
+    `delete window.__DSH_BOOTSTRAPPED__;` +
     `window.__DSH_BOOTSTRAPPED__=true;` +
     `const s=document.createElement('script');s.type='module';` +
     `s.src='${base}/v1/client.mjs?token=${token}';` +

@@ -99,6 +99,7 @@ test('书签分发与页面模块（CORS/静态资源）', async (t) => {
   assert.equal(bootstrap.status, 200);
   const bootstrapText = await bootstrap.text();
   assert.match(bootstrapText, /client\.mjs\?token=/);
+  assert.match(bootstrapText, /document\.getElementById\('dsh-page-ai-panel'\)/);
   assert.match(bootstrapText, /s\.onerror/);
   assert.match(bootstrapText, /delete window\.__DSH_BOOTSTRAPPED__/);
   assert.equal(bootstrap.headers.get('access-control-allow-origin'), '*');
@@ -110,7 +111,7 @@ test('书签分发与页面模块（CORS/静态资源）', async (t) => {
   const page = await fetch(`${base}/v1/bookmarklet?token=${CONFIG.gateway.token}`);
   assert.equal(page.status, 200);
   const pageHtml = await page.text();
-  assert.match(pageHtml, /javascript:\(\(\)=>\{if\(window\.__DSH_BOOTSTRAPPED__\)/);
+  assert.match(pageHtml, /javascript:\(\(\)=>\{if\(window\.__DSH_BOOTSTRAPPED__&&document\.getElementById\('dsh-page-ai-panel'\)\)/);
   assert.match(pageHtml, /s\.onerror/);
   assert.match(pageHtml, /delete window\.__DSH_BOOTSTRAPPED__/);
   assert.match(pageHtml, /复制书签代码/);
