@@ -15,6 +15,7 @@
 - 书签模式（bookmarklet）最小可用版本。
 - Edge MV3 薄壳扩展：悬浮按钮、整页翻译、面板与随呼入口。
 - 单元测试：占位符保护、文本收集、回填与协议路由。
+- 手动测试指南（`docs/testing-guide.md`）与示例页面（`tests/fixtures/sample-page.html`）。
 
 ### Fixed
 

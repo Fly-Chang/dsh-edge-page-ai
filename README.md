@@ -51,4 +51,5 @@ npm test
 - 项目章程：`docs/pm/project-charter.md`
 - 协议规格：`docs/specs/gateway-protocol-v1.md`
 - 架构说明：`docs/architecture.md`
+- 测试指南：`docs/testing-guide.md`
 - 变更日志：`CHANGELOG.md`

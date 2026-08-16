@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>edge-page-ai sample page</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 32px auto; padding: 0 16px; line-height: 1.7; }
+    button { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Welcome to the edge-page-ai sample page</h1>
+
+  <p>This paragraph contains <b>bold text</b>, <i>italic text</i>, and a
+    <a href="https://example.com/docs">link to example.com</a> that should keep working.</p>
+
+  <p>The price is <b>42.5 USD</b> and you can reach us at
+    <a href="mailto:me@example.com">me@example.com</a>.</p>
+
+  <ul>
+    <li>First list item with a normal sentence.</li>
+    <li>Second list item.</li>
+  </ul>
+
+  <p>This code must not be translated: <code>const answer = 42;</code></p>
+
+  <pre>Also keep this untouched: SELECT * FROM users;</pre>
+
+  <p>
+    <input id="name-input" value="Do not translate this value">
+    <button id="interactive-button" onclick="this.textContent = 'clicked'">Click me</button>
+    <button id="dynamic-button" onclick="const p = document.createElement('p'); p.textContent = 'This text was added after load.'; document.body.appendChild(p);">Add dynamic text</button>
+  </p>
+</body>
+</html>
