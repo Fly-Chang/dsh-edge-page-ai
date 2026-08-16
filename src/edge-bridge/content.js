@@ -59,13 +59,32 @@
     return loadPromise;
   }
 
+  function showNotice(message) {
+    let el = document.getElementById('dsh-page-ai-bridge-error');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'dsh-page-ai-bridge-error';
+      el.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483647;'
+        + 'background:#b42318;color:#fff;padding:10px 14px;border-radius:8px;'
+        + 'font:13px/1.5 system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.2)';
+      document.documentElement.appendChild(el);
+    }
+    el.textContent = `[DSH] ${message}`;
+    clearTimeout(el.__dshTimer);
+    el.__dshTimer = setTimeout(() => el.remove(), 8000);
+  }
+
   async function togglePanel() {
     const existing = globalThis.__DSH_BRIDGE_PANEL__;
     if (existing) {
       existing.toggle();
       return true;
     }
-    return ensurePanel();
+    const ok = await ensurePanel();
+    if (!ok) {
+      showNotice('无法启动：请确认网关已运行，且扩展选项中已填写 token。');
+    }
+    return ok;
   }
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {

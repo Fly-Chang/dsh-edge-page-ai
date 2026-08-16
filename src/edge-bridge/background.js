@@ -4,25 +4,25 @@
  */
 
 async function toggleInTab(tabId) {
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      await chrome.tabs.sendMessage(tabId, { type: 'dsh-toggle-panel' });
-      return;
-    } catch {
-      if (attempt === 0) {
-        // The tab may have been open before the extension was reloaded.
-        // Inject the content script on demand, then try again.
-        try {
-          await chrome.scripting.executeScript({
-            target: { tabId },
-            files: ['content.js'],
-          });
-        } catch {
-          // Restricted page (edge://, store, etc.): cannot inject.
-          return;
-        }
-      }
-    }
+  // Always inject the current content script first. The content script has a
+  // duplicate-injection guard, so this is safe even on pages where the
+  // declared content script is already present. This also heals pages that
+  // were opened before an extension reload.
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ['content.js'],
+    });
+  } catch {
+    // Restricted page (edge://, extension store, etc.).
+  }
+
+  try {
+    await chrome.tabs.sendMessage(tabId, { type: 'dsh-toggle-panel' });
+    await chrome.action.setBadgeText({ text: '' });
+  } catch {
+    await chrome.action.setBadgeText({ text: '!' });
+    await chrome.action.setBadgeBackgroundColor({ color: '#b42318' });
   }
 }
 
