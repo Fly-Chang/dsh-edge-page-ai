@@ -11,6 +11,14 @@ if errorlevel 1 (
   exit /b 1
 )
 
+node scripts\check-gateway-running.mjs >nul 2>nul
+if not errorlevel 1 (
+  echo [edge-page-ai] The gateway is already running at http://127.0.0.1:8787
+  echo [edge-page-ai] No action needed. Use your bookmark in Edge.
+  pause
+  exit /b 0
+)
+
 echo [edge-page-ai] Starting gateway...
 echo [edge-page-ai] The bookmarklet page URL will be printed below after startup.
 call npm start
