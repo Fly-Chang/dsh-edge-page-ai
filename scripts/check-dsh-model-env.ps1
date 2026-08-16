@@ -1,5 +1,5 @@
-# 查看 DSH_* 模型环境变量的当前状态（不显示完整密钥）。
-# 用法: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-dsh-model-env.ps1
+# Show the current DSH_* model environment variables (API key is redacted).
+# Usage: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-dsh-model-env.ps1
 
 $names = @(
   'DSH_MODEL_API_KEY',

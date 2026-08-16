@@ -1,19 +1,20 @@
 @echo off
-rem 前台启动网关（双击运行）。窗口保持打开；Ctrl+C 或直接关闭窗口即可停止。
+rem Start the gateway in the foreground (double-click to run).
+rem The window stays open. Press Ctrl+C or close the window to stop.
 setlocal
 cd /d "%~dp0.."
 
 where node >nul 2>nul
 if errorlevel 1 (
-  echo [edge-page-ai] 未找到 Node.js，请先安装 Node.js 18.17 或更高版本。
+  echo [edge-page-ai] Node.js not found. Please install Node.js 18.17 or newer.
   pause
   exit /b 1
 )
 
-echo [edge-page-ai] 正在启动网关...
-echo [edge-page-ai] 启动后可在下方输出中找到书签页地址。
+echo [edge-page-ai] Starting gateway...
+echo [edge-page-ai] The bookmarklet page URL will be printed below after startup.
 call npm start
 
 echo.
-echo [edge-page-ai] 网关已退出。
+echo [edge-page-ai] Gateway exited.
 pause

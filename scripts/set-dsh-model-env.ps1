@@ -1,17 +1,18 @@
-# 把 DeepSeek/模型配置写入当前 Windows 用户的 DSH_* 环境变量。
-# 网关优先读取环境变量（见 src/gateway/config.js），不再把密钥写入 config.local.json。
+# Persist DSH_* model environment variables for the current Windows user.
+# The gateway reads environment variables first (see src/gateway/config.js),
+# so the API key never needs to be stored in config.local.json.
 #
-# 用法（只设置密钥，其余使用 DeepSeek V4 Flash 低思考默认值）:
+# Usage (set only the API key; other values default to DeepSeek V4 Flash low-thinking):
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/set-dsh-model-env.ps1 -ApiKey "sk-..."
 #
-# 常用参数:
-#   -ApiKey             必填，DeepSeek API Key
-#   -Provider           默认 openai-compatible
-#   -BaseUrl            默认 https://api.deepseek.com
-#   -ModelName          默认 deepseek-v4-flash
-#   -TimeoutMs          默认 60000
-#   -ReasoningEffort    默认 low（low / high / max）
-#   -ThinkingType       默认 enabled（enabled / disabled）
+# Common parameters:
+#   -ApiKey             required, DeepSeek API key
+#   -Provider           default openai-compatible
+#   -BaseUrl            default https://api.deepseek.com
+#   -ModelName          default deepseek-v4-flash
+#   -TimeoutMs          default 60000
+#   -ReasoningEffort    default low (low / high / max)
+#   -ThinkingType       default enabled (enabled / disabled)
 
 param(
   [Parameter(Mandatory = $true)][string]$ApiKey,
