@@ -116,6 +116,8 @@ function bookmarkletPage(config) {
     `window.__DSH_BOOTSTRAPPED__=true;` +
     `const s=document.createElement('script');` +
     `s.src='${base}/v1/bootstrap.js?token=${token}';` +
+    `s.onerror=()=>{delete window.__DSH_BOOTSTRAPPED__;` +
+    `alert('无法连接 DSH 网关：请确认 npm start 正在运行，然后刷新页面重试');};` +
     `document.documentElement.appendChild(s);})();`;
   const fullCode = `javascript:${code}`;
   const href = `javascript:${encodeURIComponent(code)}`;
@@ -183,9 +185,12 @@ document.getElementById('copy-code').addEventListener('click', () => {
 function bootstrapJs(config) {
   const { host, port, token } = config.gateway;
   const base = `http://${host}:${port}`;
-  return `(()=>{if(window.__DSH_BOOTSTRAPPED__)return;window.__DSH_BOOTSTRAPPED__=true;` +
+  return `(()=>{if(window.__DSH_BOOTSTRAPPED__)return;` +
+    `window.__DSH_BOOTSTRAPPED__=true;` +
     `const s=document.createElement('script');s.type='module';` +
     `s.src='${base}/v1/client.mjs?token=${token}';` +
+    `s.onerror=()=>{delete window.__DSH_BOOTSTRAPPED__;` +
+    `alert('无法加载 DSH 页面客户端：请刷新页面后重试');};` +
     `document.documentElement.appendChild(s);})();`;
 }
 

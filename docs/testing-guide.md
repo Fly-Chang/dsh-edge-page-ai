@@ -97,6 +97,13 @@ Edge 打开 `http://127.0.0.1:8000/sample-page.html`。
 - 严格 CSP 页面会拦截注入（BUG-005）。
 - 点击「Add dynamic text」新增的文本，当前 MVP 不会自动翻译（MutationObserver 增量翻译在 Phase 2）。
 
+### 书签点击无反应时的排查
+
+1. 先**刷新页面**再点书签（旧版本曾因 bootstrap 标志残留导致重复点击无效，BUG-007）。
+2. 修复后若网关未启动，点击书签会弹出“无法连接 DSH 网关”提示；无弹窗说明书签代码可能还是旧的，请重新复制。
+3. 按 F12 打开 Console，点书签，查看红色报错并记录到缺陷文件。
+4. 确认右键书签 →「编辑」中的地址以 `javascript:` 开头，且包含 `v1/bootstrap.js`。
+
 ## 5. Edge 薄壳扩展测试（mock）
 
 1. Edge 打开 `edge://extensions`。

@@ -97,7 +97,10 @@ test('书签分发与页面模块（CORS/静态资源）', async (t) => {
 
   const bootstrap = await fetch(`${base}/v1/bootstrap.js?token=${CONFIG.gateway.token}`);
   assert.equal(bootstrap.status, 200);
-  assert.match(await bootstrap.text(), /client\.mjs\?token=/);
+  const bootstrapText = await bootstrap.text();
+  assert.match(bootstrapText, /client\.mjs\?token=/);
+  assert.match(bootstrapText, /s\.onerror/);
+  assert.match(bootstrapText, /delete window\.__DSH_BOOTSTRAPPED__/);
   assert.equal(bootstrap.headers.get('access-control-allow-origin'), '*');
 
   const badBootstrap = await fetch(`${base}/v1/bootstrap.js?token=nope`);
@@ -108,6 +111,8 @@ test('书签分发与页面模块（CORS/静态资源）', async (t) => {
   assert.equal(page.status, 200);
   const pageHtml = await page.text();
   assert.match(pageHtml, /javascript:\(\(\)=>\{if\(window\.__DSH_BOOTSTRAPPED__\)/);
+  assert.match(pageHtml, /s\.onerror/);
+  assert.match(pageHtml, /delete window\.__DSH_BOOTSTRAPPED__/);
   assert.match(pageHtml, /复制书签代码/);
   assert.match(pageHtml, /常见错误/);
 

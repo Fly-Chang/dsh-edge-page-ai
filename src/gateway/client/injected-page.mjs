@@ -18,7 +18,14 @@ const MAX_CHAT_ROWS = 40;
 if (window.__DSH_PANEL__) {
   console.warn('[edge-page-ai] panel already injected');
 } else {
-  bootstrap();
+  try {
+    bootstrap();
+  } catch (error) {
+    // 初始化失败时清除书签侧置位的占位标志，允许用户刷新后/修复后再次点击书签重试。
+    delete window.__DSH_BOOTSTRAPPED__;
+    console.error('[edge-page-ai] client bootstrap failed', error);
+    alert(`DSH 页面客户端初始化失败：${error?.message ?? error}`);
+  }
 }
 
 function bootstrap() {
@@ -195,6 +202,8 @@ function buildUi(gateway, state) {
     if (event.target.closest('[data-dsh-close]')) {
       root.remove();
       delete window.__DSH_PANEL__;
+      // 清除书签注入标志，允许用户关闭面板后再次点击书签重新打开。
+      delete window.__DSH_BOOTSTRAPPED__;
     }
   });
 
