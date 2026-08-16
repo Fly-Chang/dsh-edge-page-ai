@@ -103,6 +103,14 @@ test('书签分发与页面模块（CORS/静态资源）', async (t) => {
   const badBootstrap = await fetch(`${base}/v1/bootstrap.js?token=nope`);
   assert.equal(badBootstrap.status, 401);
 
+  // 书签说明页：代码必须带 javascript: 前缀，并提供复制按钮。
+  const page = await fetch(`${base}/v1/bookmarklet?token=${CONFIG.gateway.token}`);
+  assert.equal(page.status, 200);
+  const pageHtml = await page.text();
+  assert.match(pageHtml, /javascript:\(\(\)=>\{if\(window\.__DSH_BOOTSTRAPPED__\)/);
+  assert.match(pageHtml, /复制书签代码/);
+  assert.match(pageHtml, /常见错误/);
+
   const clientModule = await fetch(`${base}/v1/client.mjs`);
   assert.equal(clientModule.status, 200);
   assert.match(await clientModule.text(), /dsh-page-ai-panel/);

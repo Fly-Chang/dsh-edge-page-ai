@@ -23,6 +23,7 @@
 - 占位符保护生成嵌套 token（BUG-002）：改为单次合并正则替换。
 - `/v1/client.mjs` 与 `/core`、`/shared` 静态路由返回 404（BUG-003）：改用 `fs/promises`。
 - `npm run build:edge-bridge` 找不到 `pwsh`（BUG-004）：改用 Windows PowerShell 5.1。
+- 书签说明页代码缺少 `javascript:` 前缀、易被收藏成说明页地址（BUG-006）：补全前缀，增加复制按钮与纠错提示。
 
 ### Known Issues
 

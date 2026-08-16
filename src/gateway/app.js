@@ -117,6 +117,7 @@ function bookmarkletPage(config) {
     `const s=document.createElement('script');` +
     `s.src='${base}/v1/bootstrap.js?token=${token}';` +
     `document.documentElement.appendChild(s);})();`;
+  const fullCode = `javascript:${code}`;
   const href = `javascript:${encodeURIComponent(code)}`;
 
   return `<!doctype html>
@@ -126,21 +127,55 @@ function bookmarkletPage(config) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>edge-page-ai 书签模式</title>
 <style>
-body{font-family:system-ui,Segoe UI,sans-serif;max-width:720px;margin:40px auto;padding:0 20px;line-height:1.7;color:#1b1f24}
+body{font-family:system-ui,Segoe UI,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.7;color:#1b1f24}
 h1{font-size:1.4em}code{background:#f2f4f7;padding:2px 6px;border-radius:4px;word-break:break-all}
-.steps{margin:16px 0}.note{color:#667085}
+.warn{border:1px solid #f1c40f;background:#fff8e1;padding:10px 12px;border-radius:8px}
+textarea{box-sizing:border-box;width:100%;min-height:88px;font:12px/1.5 Consolas,monospace;border:1px solid #d0d7de;border-radius:6px;padding:8px;word-break:break-all}
+button{padding:8px 16px;border:1px solid #d0d7de;border-radius:6px;background:#f6f8fa;cursor:pointer;font:inherit;margin:8px 0}
+.steps{margin:16px 0}.note{color:#667085}#copy-status{color:#1a7f37;margin-left:8px}
 </style>
 </head>
 <body>
 <h1>edge-page-ai 书签模式</h1>
-<p>把下面的链接拖到 Edge 书签栏；打开任意英文页面后点击该书签，即可调出翻译面板。</p>
-<p><a href="${href}">DSH 整页翻译</a></p>
+<p class="warn"><b>常见错误：</b>不要用 <code>Ctrl+D</code> 收藏本页。收藏夹地址必须以
+<code>javascript:</code> 开头；如果点击书签后跳转到了 <code>${base}/v1/bookmarklet</code>，
+说明你收藏的是本说明页地址，请按下方“方式 B”把地址改为代码。</p>
+
+<h2>方式 A：拖拽链接（推荐）</h2>
 <ol class="steps">
-<li>如果书签栏未显示：<code>Ctrl+Shift+B</code> 开启。</li>
-<li>拖不动时可手动新建收藏夹，把地址设为下面这行：</li>
+<li>按 <code>Ctrl+Shift+B</code> 显示书签栏。</li>
+<li>按住下面的链接，把它<b>拖到书签栏</b>，不要点击地址栏右侧的星标。</li>
 </ol>
-<textarea rows="3" style="width:100%" readonly>${code}</textarea>
-<p class="note">链接中的 token 仅本机有效，请勿分享。网关地址：<code>${base}</code>。该页面与链接不要缓存。</p>
+<p><a href="${href}">DSH 整页翻译</a></p>
+<p class="note">在本页点击该链接会直接在本页注入面板，这是正常演示；到英文测试页点击书签才会翻译目标页面。</p>
+
+<h2>方式 B：复制代码后编辑收藏夹</h2>
+<ol class="steps">
+<li>点「复制书签代码」。</li>
+<li>打开任意页面按 <code>Ctrl+D</code> 新建收藏夹，名字随意。</li>
+<li>右键书签栏中的该收藏夹 →「编辑」。</li>
+<li>删除地址栏里的内容，粘贴刚复制的代码。</li>
+<li>确认地址以 <code>javascript:</code> 开头，保存。</li>
+</ol>
+<textarea id="bookmark-code" rows="4" readonly>${fullCode}</textarea>
+<p><button type="button" id="copy-code">复制书签代码</button><span id="copy-status"></span></p>
+
+<script>
+document.getElementById('copy-code').addEventListener('click', () => {
+  const textarea = document.getElementById('bookmark-code');
+  textarea.focus();
+  textarea.select();
+  let copied = false;
+  try { copied = document.execCommand('copy'); } catch { copied = false; }
+  if (copied) {
+    document.getElementById('copy-status').textContent = '已复制。请确认收藏夹地址以 javascript: 开头。';
+  } else {
+    document.getElementById('copy-status').textContent = '复制失败，请手动全选上方代码后 Ctrl+C。';
+  }
+});
+</script>
+
+<p class="note">代码中的 token 仅本机有效，请勿分享。网关地址：<code>${base}</code>。</p>
 </body>
 </html>`;
 }
