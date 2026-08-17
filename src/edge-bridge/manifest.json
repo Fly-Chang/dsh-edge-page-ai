@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DSH Page AI",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "dsh-edge-page-ai 浏览器薄壳：把页面桥接到本机 DSH 网关，只负责注入与转发，不保存模型密钥。",
   "permissions": [
     "storage",

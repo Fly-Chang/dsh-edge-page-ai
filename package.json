@@ -1,6 +1,6 @@
 {
   "name": "dsh-edge-page-ai",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Edge 页面 AI 翻译与随呼助手：DSH 插件主体 + 浏览器薄壳/书签入口",
   "type": "module",
   "homepage": "https://github.com/Fly-Chang/dsh-edge-page-ai#readme",
