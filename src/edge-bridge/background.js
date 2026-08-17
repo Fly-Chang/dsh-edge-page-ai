@@ -90,3 +90,7 @@ chrome.runtime.onInstalled.addListener((details) => {
     void chrome.runtime.openOptionsPage();
   }
 });
+
+// Ensure native host connection is attempted whenever the service worker starts,
+// including after an unpacked extension reload (onInstalled/onStartup may not fire).
+connectNativeHost();
