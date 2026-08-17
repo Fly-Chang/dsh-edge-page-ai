@@ -1,6 +1,9 @@
 # Install the dsh-edge-page-ai Native Messaging Host for Edge.
 # Registers: HKCU\Software\Microsoft\Edge\NativeMessagingHosts\dsh_edge_page_ai
-# Usage: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-native-host.ps1
+# Usage: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-native-host.ps1 [-ExtensionId "chrome-extension-id"]
+param(
+  [string]$ExtensionId = 'cfincmndfcaalkamnebmfjolnmnahioh'
+)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $hostName = 'dsh_edge_page_ai'
@@ -17,7 +20,7 @@ $manifest = @{
   description = 'dsh-edge-page-ai native companion host'
   path = $hostCmd
   type = 'stdio'
-  allowed_origins = @('chrome-extension://cfincmndfcaalkamnebmfjolnmnahioh/')
+  allowed_origins = @("chrome-extension://$ExtensionId/")
 } | ConvertTo-Json -Compress
 
 Set-Content -Path $manifestPath -Value $manifest -Encoding Ascii
