@@ -2,5 +2,8 @@
   "name": "dsh_edge_page_ai",
   "description": "dsh-edge-page-ai native companion host",
   "path": "{{ROOT}}\\native-host\\host.cmd",
-  "type": "stdio"
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://cfincmndfcaalkamnebmfjolnmnahioh/"
+  ]
 }

@@ -116,7 +116,9 @@ npm run native:uninstall
 - 要求：先安装 Node.js，且 Node 在 PATH 中；
 - 宿主脚本：`native-host/index.js`；
 - 注册表位置：`HKCU\Software\Microsoft\Edge\NativeMessagingHosts\dsh_edge_page_ai`；
-- 该方案不依赖特定 Edge 入口，任意方式打开 Edge 都有效。
+- 该方案不依赖特定 Edge 入口，任意方式打开 Edge 都有效；
+- 若更换扩展目录导致扩展 ID 变化，更新 `native-host/manifest.template.json` 中的
+  `allowed_origins` 后重新 `npm run native:install`。
 
 ### 支持的 DSH 环境变量
 

@@ -17,6 +17,7 @@ $manifest = @{
   description = 'dsh-edge-page-ai native companion host'
   path = $hostCmd
   type = 'stdio'
+  allowed_origins = @('chrome-extension://cfincmndfcaalkamnebmfjolnmnahioh/')
 } | ConvertTo-Json -Compress
 
 Set-Content -Path $manifestPath -Value $manifest -Encoding Ascii
