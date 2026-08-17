@@ -87,6 +87,17 @@ npm run env:check
 
 停止网关：双击 `scripts\stop-gateway.bat`。
 
+### 伴随浏览器启动（Phase 1）
+
+桌面新增 **「DSH Edge」** 快捷方式（也可双击 `scripts\start-edge-with-gateway.vbs`）：
+
+1. 检查 `127.0.0.1:8787`，未运行时自动后台启动网关；
+2. 打开 Edge；
+3. 当所有 Edge 可见窗口关闭约 10 秒后，自动停止“本次启动的网关”；
+4. 如果启动前网关已在运行，则关闭 Edge 时**不会**停止它。
+
+命令行调试：`npm run start:edge`。日志：`logs\edge-gateway.log`。
+
 ### 支持的 DSH 环境变量
 
 | 变量 | 说明 | 默认值 |

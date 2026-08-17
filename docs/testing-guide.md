@@ -21,6 +21,8 @@
 2. 双击 `scripts\start-gateway-silent.vbs`（后台静默，日志在 `logs\gateway.log`）；
 3. 命令行 `npm start`（开发调试用）。
 
+伴随浏览器启动：双击桌面「DSH Edge」→ 自动启动网关并打开 Edge，关闭所有 Edge 窗口约 10 秒后自动停止本次启动的网关（Phase 1）。
+
 停止网关：双击 `scripts\stop-gateway.bat`。打开书签说明页：双击 `scripts\open-bookmarklet.bat`。
 
 ## 1. 自动化测试（1 分钟）
