@@ -31,5 +31,7 @@ test('manifest 声明 bundle 为 web accessible resource', () => {
 
   assert.equal(manifest.manifest_version, 3);
   assert.equal(manifest.permissions.includes('scripting'), true);
+  assert.equal(manifest.permissions.includes('nativeMessaging'), true);
+  assert.equal(manifest.permissions.includes('alarms'), true);
   assert.equal(manifest.web_accessible_resources[0].resources.includes('bridge-client.bundle.mjs'), true);
 });

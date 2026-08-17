@@ -42,7 +42,50 @@ chrome.commands.onCommand.addListener(async (command) => {
   }
 });
 
+const NATIVE_HOST_NAME = 'dsh_edge_page_ai';
+const HEARTBEAT_ALARM = 'dsh-native-heartbeat';
+
+let nativePort = null;
+
+function connectNativeHost() {
+  if (nativePort) {
+    return;
+  }
+  try {
+    nativePort = chrome.runtime.connectNative(NATIVE_HOST_NAME);
+    nativePort.onMessage.addListener((message) => {
+      if (message?.type === 'error') {
+        console.warn('[dsh-edge-page-ai] native host error:', message.error);
+      }
+    });
+    nativePort.onDisconnect.addListener(() => {
+      nativePort = null;
+    });
+    nativePort.postMessage({ type: 'start-gateway' });
+    chrome.alarms.create(HEARTBEAT_ALARM, { periodInMinutes: 1 });
+  } catch (error) {
+    console.warn('[dsh-edge-page-ai] native host connect failed:', error);
+  }
+}
+
+function sendHeartbeat() {
+  if (nativePort) {
+    nativePort.postMessage({ type: 'heartbeat' });
+  }
+}
+
+chrome.runtime.onStartup.addListener(() => {
+  connectNativeHost();
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === HEARTBEAT_ALARM) {
+    sendHeartbeat();
+  }
+});
+
 chrome.runtime.onInstalled.addListener((details) => {
+  connectNativeHost();
   if (details.reason === 'install') {
     void chrome.runtime.openOptionsPage();
   }

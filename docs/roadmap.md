@@ -13,7 +13,7 @@
 - 模型：支持 `DSH_*` 环境变量绑定 + `config.local.json` 降级；
   已预置 DeepSeek `deepseek-v4-flash` 低思考模式。
 - 性能：逐批立即回填 + 翻译关闭思考 + 小批 30 条/并发 3（2026-08-16 已实施）。
-- 启动：Phase 1 伴随浏览器启动器（DSH Edge 桌面快捷方式）已实施；Phase 2 Native Messaging 待做。
+- 启动：Phase 1 伴随浏览器启动器（DSH Edge 桌面快捷方式）已实施；Phase 2 Native Messaging 已实施（`npm run native:install`）。
 
 ## 2. 优先级总览
 

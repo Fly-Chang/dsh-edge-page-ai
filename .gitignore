@@ -10,6 +10,7 @@ dist/*.pem
 *.local.json
 config.local.json
 .gateway-token
+native-host/manifest.json
 
 # 日志与临时文件
 *.log

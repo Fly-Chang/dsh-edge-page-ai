@@ -26,6 +26,7 @@
 - 面板新增「停止」按钮：翻译进行中可强制终止，已完成批次保留、未开始批次保留原文。
 - UI 美化：渐变标题栏、主操作按钮、翻译进度条、状态底色、对话气泡样式。
 - Phase 1 伴随浏览器启动：`DSH Edge` 桌面快捷方式自动启动网关 + Edge，浏览器关闭后自动停止本次启动的网关（Native Messaging 为 Phase 2）。
+- Phase 2 Native Messaging：Edge 扩展通过本机宿主自动拉起/心跳守护/关闭网关（`npm run native:install` 安装）。
 
 ### Fixed
 

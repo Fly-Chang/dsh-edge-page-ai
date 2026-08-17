@@ -23,6 +23,8 @@
 
 伴随浏览器启动：双击桌面「DSH Edge」→ 自动启动网关并打开 Edge，关闭所有 Edge 窗口约 10 秒后自动停止本次启动的网关（Phase 1）。
 
+Phase 2 Native Messaging：执行 `npm run native:install` 后，任意方式打开 Edge 都会自动拉起网关；关闭 Edge 后由宿主停止本次启动的网关。
+
 停止网关：双击 `scripts\stop-gateway.bat`。打开书签说明页：双击 `scripts\open-bookmarklet.bat`。
 
 ## 1. 自动化测试（1 分钟）

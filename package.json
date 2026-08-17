@@ -21,7 +21,9 @@
     "build:edge-bridge": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-edge-bridge.ps1",
     "env:set": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/set-dsh-model-env.ps1",
     "env:check": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-dsh-model-env.ps1",
-    "start:edge": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-edge-with-gateway.ps1"
+    "start:edge": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-edge-with-gateway.ps1",
+    "native:install": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-native-host.ps1",
+    "native:uninstall": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/uninstall-native-host.ps1"
   },
   "keywords": [
     "edge",

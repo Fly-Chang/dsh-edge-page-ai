@@ -98,6 +98,26 @@ npm run env:check
 
 命令行调试：`npm run start:edge`。日志：`logs\edge-gateway.log`。
 
+### 伴随浏览器启动（Phase 2：Native Messaging）
+
+安装本机守护进程（一次性）：
+
+```powershell
+npm run native:install
+```
+
+之后 Edge 启动时会自动通过 Native Messaging Host 拉起本地网关；Edge 关闭后，
+宿主进程检测到心跳停止会自动关闭“本次由宿主启动的网关”。卸载：
+
+```powershell
+npm run native:uninstall
+```
+
+- 要求：先安装 Node.js，且 Node 在 PATH 中；
+- 宿主脚本：`native-host/index.js`；
+- 注册表位置：`HKCU\Software\Microsoft\Edge\NativeMessagingHosts\dsh_edge_page_ai`；
+- 该方案不依赖特定 Edge 入口，任意方式打开 Edge 都有效。
+
 ### 支持的 DSH 环境变量
 
 | 变量 | 说明 | 默认值 |
